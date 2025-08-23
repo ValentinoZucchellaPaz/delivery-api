@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "**Couriers Delivery Service** is a backend RESTful API designed for a food delivery platform.   It allows **customers** to place orders from **restaurants**, calculates **total price** and **estimated delivery time**, and manages **order status updates** throughout the delivery process.",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon index.js"
@@ -18,10 +19,12 @@
   },
   "homepage": "https://github.com/ValentinoZucchellaPaz/delivery-api#readme",
   "dependencies": {
-    "bcryptjs": "^3.0.2",
+    "bcrypt": "^6.0.0",
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
-    "jsonwebtoken": "^9.0.2"
+    "jsonwebtoken": "^9.0.2",
+    "mysql2": "^3.14.3",
+    "zod": "^4.1.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"

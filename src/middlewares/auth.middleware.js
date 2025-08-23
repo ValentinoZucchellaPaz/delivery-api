@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
+import { de } from 'zod/locales';
 
 dotenv.config();
 
@@ -13,6 +14,7 @@ export const authenticateToken = (req, res, next) => {
         if (err) return res.status(403).json({ error: 'Invalid or expired token' });
 
         req.user = decoded; // { user_id, role }
+
         next();
     });
 };
