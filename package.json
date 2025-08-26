@@ -2,11 +2,11 @@
   "name": "delivery-app",
   "version": "1.0.0",
   "description": "**Couriers Delivery Service** is a backend RESTful API designed for a food delivery platform.   It allows **customers** to place orders from **restaurants**, calculates **total price** and **estimated delivery time**, and manages **order status updates** throughout the delivery process.",
-  "main": "index.js",
+  "main": "./src/server.js",
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "node --watch index.js"
+    "dev": "node --watch src/server.js"
   },
   "repository": {
     "type": "git",

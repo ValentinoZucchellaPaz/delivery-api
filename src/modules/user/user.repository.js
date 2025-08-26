@@ -1,13 +1,14 @@
-import pool from "./connection.js";
-import { userSchema } from "../schemas/entities.js"
+import pool from "../../config/db.js";
+import { UserSchema } from "./user.schema.js"
 import bcrypt from "bcrypt";
 
 /**
  * Create user in DB
  * @param {object} userData - required fields: name, email, password_hash, role
+ * @returns created user
  */
 export async function createUser(userData) {
-    const validatedUser = userSchema.parse(userData);
+    const validatedUser = UserSchema.parse(userData);
 
     const res = await pool.query(
         `INSERT INTO users (name, email, password_hash, role)
@@ -31,7 +32,7 @@ export async function getUserByEmail(email) {
     );
 
     if (res.rows.length === 0) return null;
-    return userSchema.parse(res.rows[0]);
+    return UserSchema.parse(res.rows[0]);
 }
 
 /**
@@ -49,6 +50,10 @@ export async function authenticateUser(email, password) {
     return user;
 }
 
+/**
+ * Gets all users in DB
+ * @returns list of users: {id, name, email, role, active, created_at}[]
+ */
 export async function getAllUsers() {
     const res = await pool.query("SELECT id, name, email, role, active, created_at FROM users");
     return res.rows;

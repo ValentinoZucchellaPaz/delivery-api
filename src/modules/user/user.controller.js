@@ -1,8 +1,7 @@
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
-import { authenticateUser, createUser, getAllUsers, getUserByEmail } from "../db/users.js";
-import pool from "../db/connection.js";
-import { UserRegisterRequest, UserLoginRequest } from "../schemas/requests.js";
+import { authenticateUser, createUser, getAllUsers, getUserByEmail } from "./user.repository.js";
+import { UserRegisterRequest, UserLoginRequest } from "./user.schema.js";
 
 export async function getUsers(req, res, next) {
     try {

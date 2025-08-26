@@ -1,45 +1,11 @@
-// import swaggerJSDoc from 'swagger-jsdoc';
-// import swaggerUi from 'swagger-ui-express';
-// import path from 'path';
-// import { fileURLToPath } from 'url';
-
-// const __filename = fileURLToPath(import.meta.url);
-// const __dirname = path.dirname(__filename);
-
-// const swaggerDefinition = {
-//     openapi: '3.0.0',
-//     info: {
-//         title: 'Mi API',
-//         version: '1.0.0',
-//         description: 'Documentación generada automáticamente con Swagger',
-//     },
-// };
-
-// const options = {
-//     swaggerDefinition,
-//     apis: [
-//         path.join(__dirname, '../routes/*.js'),
-//         path.join(__dirname, '../schemas/*.js'),
-//     ],
-// };
-
-// const swaggerSpec = swaggerJSDoc(options);
-
-// export default (app) => {
-//     app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-// };
-
-
-// src/docs/openapi.ts
-import * as z from 'zod';
-import 'zod-openapi'; // <-- habilita tipos para .meta(...)
+import { z } from 'zod';
 import { createDocument } from 'zod-openapi';
 import {
-    UserListResponseSchema,
+    UserListResponse,
     UserLoginRequest,
     UserRegisterRequest,
-    UserRegisterResponseSchema
-} from '../schemas/requests.js';
+    UserRegisterResponse
+} from '../modules/user/user.schema.js';
 
 export const openApiDoc = createDocument({
     openapi: '3.1.0',
@@ -64,7 +30,7 @@ export const openApiDoc = createDocument({
                     200: {
                         description: 'List of users retrieved succesfully',
                         content: {
-                            "application/json": { schema: UserListResponseSchema }
+                            "application/json": { schema: UserListResponse }
                         }
                     },
                 },
@@ -82,7 +48,7 @@ export const openApiDoc = createDocument({
                     201: {
                         description: 'Created',
                         content: {
-                            "application/json": { schema: UserRegisterResponseSchema }
+                            "application/json": { schema: UserRegisterResponse }
                         }
                     },
                 },

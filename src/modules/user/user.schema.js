@@ -1,9 +1,24 @@
-import { email, z } from "zod";
-import { userSchema } from "./entities.js";
+import { z } from 'zod'
 
-export const UserRoleEnum = z.enum(["admin", "restaurant_owner", "customer"]).meta({
-    description: "User roles",
-    example: "admin",
+export const UserRoleEnum = z.enum(["admin", "restaurant_owner", "customer"])
+    .default('customer')
+    .meta({
+        description: "User roles",
+        example: "admin",
+    });
+
+export const UserSchema = z.object({
+    id: z.number().int(),
+    name: z.string().min(2).meta({ example: "Admin" }),
+    email: z.email().meta({ example: "admin@example.com" }),
+    password_hash: z.string(),
+    role: UserRoleEnum,
+    active: z.union([z.boolean(), z.number()])
+        .transform(val => Boolean(val)) // converts 0/1 -> false/true
+        .meta({ example: true }),
+    created_at: z.union([z.string(), z.instanceof(Date)])
+        .transform(val => new Date(val).toISOString())
+        .meta({ example: "2025-08-26T10:00:00Z" })
 });
 
 export const UserRegisterRequest = z.object({
@@ -22,7 +37,7 @@ export const UserLoginRequest = z.object({
     id: "UserLoginRequestDTO"
 });
 
-export const UserRegisterResponseSchema = z.object({
+export const UserRegisterResponse = z.object({
     status: z.literal("success"),
     user: z.object({
         id: z.int().meta({ example: 1 }),
@@ -34,9 +49,9 @@ export const UserRegisterResponseSchema = z.object({
     id: "UserRegisterResponseDTO"
 });
 
-export const UserListResponseSchema = z.object({
+export const UserListResponse = z.object({
     status: z.literal("success"),
-    users: z.array(userSchema),
+    users: z.array(UserSchema),
 }).meta({
     id: "UserListResponseDTO",
     example: {
