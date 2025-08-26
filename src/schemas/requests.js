@@ -1,59 +1,55 @@
-import { z } from "zod";
+import { email, z } from "zod";
+import { userSchema } from "./entities.js";
 
-/**
- * @swagger
- * components:
- *   schemas:
- *     UserRegisterRequest:
- *       type: object
- *       required:
- *         - name
- *         - email
- *         - password
- *         - role
- *       properties:
- *         email:
- *           type: string
- *           format: email
- *           example: "user@example.com"
- *         password:
- *           type: string
- *           format: password
- *           example: "123456"
- *         name:
- *           type: string
- *           example: "John Doe"
- *         role:
- *          type: string
- *          enum: [customer, restaurant_owner, admin]
- */
-export const UserRegisterRequest = z.object({
-    name: z.string().min(2),
-    email: z.email(),
-    password: z.string().min(6),
-    role: z.enum(['customer', 'restaurant_owner', 'admin']).optional()
+export const UserRoleEnum = z.enum(["admin", "restaurant_owner", "customer"]).meta({
+    description: "User roles",
+    example: "admin",
 });
 
-/**
- * @swagger
- * components:
- *   schemas:
- *     UserLoginRequest:
- *       type: object
- *       required:
- *         - email
- *         - password
- *       properties:
- *         email:
- *           type: string
- *           format: email
- *           example: "user@example.com"
- *         password:
- *           type: string
- *           format: password
- *           example: "123456"
- */
+export const UserRegisterRequest = z.object({
+    name: z.string().min(2).meta({ description: "Name", example: "John Doe" }),
+    email: z.email().meta({ example: "example@gmail.com" }),
+    password: z.string().min(6),
+    role: UserRoleEnum
+}).meta({
+    id: "UserRegisterRequestDTO"
+});
+
 export const UserLoginRequest = z.object({
-    email: z.email(),
-    password: z.string().min(6)
+    email: z.email().meta({ example: "admin@example.com" }),
+    password: z.string().min(6).meta("123456")
+}).meta({
+    id: "UserLoginRequestDTO"
+});
+
+export const UserRegisterResponseSchema = z.object({
+    status: z.literal("success"),
+    user: z.object({
+        id: z.int().meta({ example: 1 }),
+        name: z.string().meta({ example: 'Admin' }),
+        email: z.email().meta({ example: "admin@example.com" }),
+        role: UserRoleEnum
+    })
+}).meta({
+    id: "UserRegisterResponseDTO"
+});
+
+export const UserListResponseSchema = z.object({
+    status: z.literal("success"),
+    users: z.array(userSchema),
+}).meta({
+    id: "UserListResponseDTO",
+    example: {
+        status: "success",
+        users: [
+            {
+                id: 1,
+                name: "Valentino",
+                email: "vale@example.com",
+                role: "admin",
+                active: true,
+                created_at: "2025-08-26T10:00:00Z"
+            }
+        ]
+    }
 });

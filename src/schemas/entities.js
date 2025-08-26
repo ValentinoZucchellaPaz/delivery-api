@@ -1,18 +1,20 @@
 import { z } from "zod";
+import { UserRoleEnum } from "./requests.js";
 
 // -------------------- USERS --------------------
 export const userSchema = z.object({
-    id: z.number().int().optional(),
-    name: z.string().min(2),
-    email: z.email(),
-    password_hash: z.string(),
-    role: z.enum(['customer', 'restaurant_owner', 'admin']).default('customer'),
-    active: z.union([z.boolean(), z.number()]).optional()
-        .transform(val => Boolean(val)), // converts 0/1 -> false/true
-    created_at: z.union([z.string(), z.instanceof(Date)]).optional()
-        .transform(val => val ? new Date(val).toISOString() : null)
-
+    id: z.number().int(),
+    name: z.string().min(2).meta({ example: "Admin" }),
+    email: z.email().meta({ example: "admin@example.com" }),
+    role: z.enum(["admin", "restaurant_owner", "customer"]).default('customer').meta({ example: "admin" }),
+    active: z.union([z.boolean(), z.number()])
+        .transform(val => Boolean(val)) // converts 0/1 -> false/true
+        .meta({ example: true }),
+    created_at: z.union([z.string(), z.instanceof(Date)])
+        .transform(val => new Date(val).toISOString())
+        .meta({ example: "2025-08-26T10:00:00Z" })
 });
+
 
 // -------------------- RESTAURANTS --------------------
 export const restaurantSchema = z.object({

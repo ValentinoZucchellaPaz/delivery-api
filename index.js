@@ -1,25 +1,23 @@
 import express from 'express';
 import dotenv from 'dotenv';
-import swaggerDocs from './src/docs/swagger.js';
+const app = express();
 
-
-
-// routes
-import userRoutes from './src/routes/user.routes.js';
-import orderRoutes from './src/routes/order.routes.js';
 
 // middlewares
 import { authenticateToken, authorizeRoles } from './src/middlewares/auth.middleware.js';
 import { errorHandler } from './src/middlewares/errorHandler.js';
-
 dotenv.config();
-
-const app = express();
 app.use(express.json());
+app.use(errorHandler);
 
-// swagger setup
-swaggerDocs(app);
+// swagger docs endpoint
+import swaggerUi from 'swagger-ui-express'
+import { openApiDoc } from './src/docs/swagger.js';
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(openApiDoc));
 
+// routes
+import userRoutes from './src/routes/user.routes.js';
+import orderRoutes from './src/routes/order.routes.js';
 app.use('/orders', orderRoutes);
 app.use('/users', userRoutes)
 
@@ -33,7 +31,6 @@ app.post('/restaurants/menu', authenticateToken, authorizeRoles('restaurant'), (
 });
 
 
-app.use(errorHandler);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
