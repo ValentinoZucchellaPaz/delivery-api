@@ -1,6 +1,27 @@
 import pool from "../../config/db.js";
-import { UserSchema } from "./user.schema.js"
 import bcrypt from "bcrypt";
+
+/**
+ * Gets all users in DB
+ * @returns list of users: {id, name, email, role, active, created_at}[]
+ */
+export async function getAllUsers() {
+    const res = await pool.query("SELECT id, name, email, role, active, created_at FROM users");
+    return res.rows;
+}
+
+/**
+ * Get an user by its Id
+ * @param {int} id
+ * @return {object} userData: {id, name, email, role, active, created_at}
+ */
+export async function getUserById(id) {
+    const res = await pool.query(
+        `SELECT id, name, email, role, active, created_at 
+        FROM users WHERE id = $1`,
+        [id]);
+    return res.rows[0] || null;
+}
 
 /**
  * Create user in DB
@@ -31,8 +52,7 @@ export async function getUserByEmail(email) {
         [email]
     );
 
-    if (res.rows.length === 0) return null;
-    return UserSchema.parse(res.rows[0]);
+    return res.rows[0] || null;
 }
 
 /**
@@ -45,16 +65,6 @@ export async function authenticateUser(email, password) {
     const user = await getUserByEmail(email);
     if (!user) return null;
     const isMatch = await bcrypt.compare(password, user.password_hash);
-    if (!isMatch) return null;
 
-    return user;
-}
-
-/**
- * Gets all users in DB
- * @returns list of users: {id, name, email, role, active, created_at}[]
- */
-export async function getAllUsers() {
-    const res = await pool.query("SELECT id, name, email, role, active, created_at FROM users");
-    return res.rows;
+    return isMatch ? user : null;
 }

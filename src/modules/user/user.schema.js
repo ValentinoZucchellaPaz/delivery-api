@@ -21,6 +21,8 @@ export const UserSchema = z.object({
         .meta({ example: "2025-08-26T10:00:00Z" })
 });
 
+export const PublicUserSchema = UserSchema.omit({ password_hash: true })
+
 export const UserRegisterRequest = z.object({
     name: z.string().min(2).meta({ description: "Name", example: "John Doe" }),
     email: z.email().meta({ example: "example@gmail.com" }),
@@ -51,7 +53,7 @@ export const UserRegisterResponse = z.object({
 
 export const UserListResponse = z.object({
     status: z.literal("success"),
-    users: z.array(UserSchema),
+    users: z.array(PublicUserSchema),
 }).meta({
     id: "UserListResponseDTO",
     example: {
@@ -67,4 +69,8 @@ export const UserListResponse = z.object({
             }
         ]
     }
+});
+
+export const userIdParamSchema = z.object({
+    id: z.string().regex(/^\d+$/).transform(val => parseInt(val, 10)) // transforms to number, extra security
 });

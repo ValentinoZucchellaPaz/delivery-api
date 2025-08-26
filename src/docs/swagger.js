@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { createDocument } from 'zod-openapi';
 import {
+    PublicUserSchema,
     UserListResponse,
     UserLoginRequest,
     UserRegisterRequest,
@@ -36,7 +37,22 @@ export const openApiDoc = createDocument({
                 },
             },
         },
-        'users/register': {
+        '/users/:id': {
+            get: {
+                summary: 'Gets user by id',
+                security: [{ bearerAuth: [] }], // protected endpoint
+                "x-roles": ["admin"],
+                responses: {
+                    200: {
+                        description: 'User retrieved succesfully',
+                        content: {
+                            "application/json": { schema: PublicUserSchema }
+                        }
+                    },
+                },
+            },
+        },
+        '/users/register': {
             post: {
                 summary: 'Create user',
                 requestBody: {

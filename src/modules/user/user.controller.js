@@ -1,14 +1,30 @@
-import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
-import { authenticateUser, createUser, getAllUsers, getUserByEmail } from "./user.repository.js";
-import { UserRegisterRequest, UserLoginRequest } from "./user.schema.js";
+import { authenticateUser, createUser, getAllUsers, getUserByEmail, getUserById } from "./user.repository.js";
+import { UserRegisterRequest, UserLoginRequest, PublicUserSchema, UserRegisterResponse } from "./user.schema.js";
+import { signJwt } from "../../utils/jwt.js";
 
 export async function getUsers(req, res, next) {
     try {
-        return await getAllUsers()
-            .then(users => res.json({ status: "success", users }))
+        const users = await getAllUsers()
+        const parsedUsers = users.map(u => PublicUserSchema.parse(u))
+        return res.json({ status: "success", parsedUsers })
     } catch (err) {
-        next(err); // pasa el error al middleware
+        next(err);
+    }
+}
+
+export async function getUser(req, res, next) {
+    try {
+        const { id } = req.params;
+        const user = await getUserById(id)
+
+        if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
+
+        const parsedUser = PublicUserSchema.parse(user);
+
+        res.json({ status: 'success', user: parsedUser });
+    } catch (err) {
+        next(err)
     }
 }
 
@@ -28,8 +44,10 @@ export async function registerUser(req, res, next) {
 
         // Create user in DB
         const newUser = await createUser({ name, email, password_hash, role });
+        const parsedUser = UserRegisterResponse.parse({ id: newUser.id, name, email, role })
 
-        res.status(201).json({ status: "success", user: { id: newUser.id, name, email, role } });
+
+        res.status(201).json({ status: "success", user: parsedUser });
     } catch (err) {
         next(err); // middleware for global error handling
     }
@@ -42,11 +60,7 @@ export const login = async (req, res) => {
     const user = await authenticateUser(email, password);
     if (!user) return res.status(401).json({ error: 'Invalid credentials' });
 
-    const token = jwt.sign(
-        { user_id: user.id, role: user.role },
-        process.env.JWT_SECRET,
-        { expiresIn: '1h' }
-    );
+    const token = signJwt({ user_id: user.id, role: user.role }, 3600)
 
     res.json({ token });
 };
