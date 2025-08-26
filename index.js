@@ -1,5 +1,8 @@
 import express from 'express';
 import dotenv from 'dotenv';
+import swaggerDocs from './src/docs/swagger.js';
+
+
 
 // routes
 import userRoutes from './src/routes/user.routes.js';
@@ -13,6 +16,9 @@ dotenv.config();
 
 const app = express();
 app.use(express.json());
+
+// swagger setup
+swaggerDocs(app);
 
 app.use('/orders', orderRoutes);
 app.use('/users', userRoutes)

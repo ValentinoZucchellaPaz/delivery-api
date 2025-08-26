@@ -1,6 +1,5 @@
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
-import { de } from 'zod/locales';
 
 dotenv.config();
 

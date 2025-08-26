@@ -1,5 +1,5 @@
 import pool from "./connection.js";
-import { userSchema } from "./schemas.js";
+import { userSchema } from "../schemas/entities.js"
 import bcrypt from "bcrypt";
 
 /**
@@ -9,12 +9,14 @@ import bcrypt from "bcrypt";
 export async function createUser(userData) {
     const validatedUser = userSchema.parse(userData);
 
-    const [result] = await pool.execute(
-        "INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)",
+    const res = await pool.query(
+        `INSERT INTO users (name, email, password_hash, role)
+         VALUES ($1, $2, $3, $4)
+         RETURNING id`,
         [validatedUser.name, validatedUser.email, validatedUser.password_hash, validatedUser.role]
     );
 
-    return { id: result.insertId, ...validatedUser };
+    return { id: res.rows[0].id, ...validatedUser };
 }
 
 /**
@@ -23,13 +25,13 @@ export async function createUser(userData) {
  * @returns user object or null if not found
  */
 export async function getUserByEmail(email) {
-    const [rows] = await pool.execute(
-        "SELECT * FROM users WHERE email = ?",
+    const res = await pool.query(
+        "SELECT * FROM users WHERE email = $1",
         [email]
     );
 
-    if (rows.length === 0) return null;
-    return userSchema.parse(rows[0]);
+    if (res.rows.length === 0) return null;
+    return userSchema.parse(res.rows[0]);
 }
 
 /**
@@ -45,4 +47,9 @@ export async function authenticateUser(email, password) {
     if (!isMatch) return null;
 
     return user;
+}
+
+export async function getAllUsers() {
+    const res = await pool.query("SELECT id, name, email, role, active, created_at FROM users");
+    return res.rows;
 }

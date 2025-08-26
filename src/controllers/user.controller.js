@@ -1,27 +1,13 @@
-// ./src/controllers/usersController.js
-import { z } from "zod";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
-import { authenticateUser, createUser, getUserByEmail } from "../db/users.js";
+import { authenticateUser, createUser, getAllUsers, getUserByEmail } from "../db/users.js";
 import pool from "../db/connection.js";
-
-// Schema Zod para request
-const createUserRequestSchema = z.object({
-    name: z.string().min(2),
-    email: z.email(),
-    password: z.string().min(6),
-    role: z.enum(['customer', 'restaurant_owner', 'admin']).optional()
-});
-
-const loginRequestSchema = z.object({
-    email: z.email(),
-    password: z.string().min(6)
-});
+import { UserRegisterRequest, UserLoginRequest } from "../schemas/requests.js";
 
 export async function getUsers(req, res, next) {
     try {
-        const [rows] = await pool.execute("SELECT id, name, email, role, active, created_at FROM users");
-        res.json(rows);
+        return await getAllUsers()
+            .then(users => res.json({ status: "success", users }))
     } catch (err) {
         next(err); // pasa el error al middleware
     }
@@ -29,7 +15,7 @@ export async function getUsers(req, res, next) {
 
 export async function registerUser(req, res, next) {
     try {
-        const { name, email, password, role } = createUserRequestSchema.parse(req.body);
+        const { name, email, password, role } = UserRegisterRequest.parse(req.body);
 
         // Verify existing email
         const existingUser = await getUserByEmail(email);
@@ -38,7 +24,7 @@ export async function registerUser(req, res, next) {
         }
 
         // Hash password
-        const saltRounds = 10;
+        const saltRounds = process.env.SALT_ROUNDS || 10;
         const password_hash = await bcrypt.hash(password, saltRounds);
 
         // Create user in DB
@@ -52,7 +38,7 @@ export async function registerUser(req, res, next) {
 
 
 export const login = async (req, res) => {
-    const { email, password } = loginRequestSchema.parse(req.body);
+    const { email, password } = UserLoginRequest.parse(req.body);
 
     const user = await authenticateUser(email, password);
     if (!user) return res.status(401).json({ error: 'Invalid credentials' });

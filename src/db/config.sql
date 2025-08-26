@@ -1,97 +1,94 @@
-DROP TABLE IF EXISTS order_items;
-DROP TABLE IF EXISTS orders;
-DROP TABLE IF EXISTS menu_items;
-DROP TABLE IF EXISTS menus;
-DROP TABLE IF EXISTS branches;
-DROP TABLE IF EXISTS restaurants;
-DROP TABLE IF EXISTS users;
+--  migration to postrgres
 
--- USERS: restaurant owners (+ restaurant entity & branches), customers, admins
+DROP TABLE IF EXISTS order_items CASCADE;
+DROP TABLE IF EXISTS orders CASCADE;
+DROP TABLE IF EXISTS menu_items CASCADE;
+DROP TABLE IF EXISTS menus CASCADE;
+DROP TABLE IF EXISTS branches CASCADE;
+DROP TABLE IF EXISTS restaurants CASCADE;
+DROP TABLE IF EXISTS users CASCADE;
+
+-- USERS
 CREATE TABLE users (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+    id SERIAL PRIMARY KEY,  -- SERIAL reemplaza AUTO_INCREMENT
     name VARCHAR(100) NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
-    role ENUM('customer', 'restaurant_owner', 'admin') NOT NULL DEFAULT 'customer',
+    role TEXT NOT NULL DEFAULT 'customer', -- reemplazo ENUM con TEXT + CHECK
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    active BOOLEAN NOT NULL DEFAULT TRUE,
+    CHECK (role IN ('customer', 'restaurant_owner', 'admin'))
+);
+
+-- RESTAURANTS
+CREATE TABLE restaurants (
+    id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    name VARCHAR(100) NOT NULL,
+    description TEXT, -- TINYTEXT → TEXT
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- BRANCHES
+CREATE TABLE branches (
+    id SERIAL PRIMARY KEY,
+    restaurant_id INT NOT NULL REFERENCES restaurants(id) ON DELETE CASCADE,
+    address VARCHAR(255) NOT NULL,
+    city VARCHAR(100) NOT NULL,
+    avg_waiting_time INT DEFAULT 0, -- minutes
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     active BOOLEAN NOT NULL DEFAULT TRUE
 );
 
-CREATE TABLE restaurants (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
-    name VARCHAR(100) NOT NULL,
-    description TINYTEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-);
-
-CREATE TABLE branches (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    restaurant_id INT NOT NULL,
-    address VARCHAR(255) NOT NULL,
-    city VARCHAR(100) NOT NULL,
-    avg_waiting_time INT DEFAULT 0, -- minutes
-    
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    active BOOLEAN NOT NULL DEFAULT TRUE,
-    FOREIGN KEY (restaurant_id) REFERENCES restaurants(id) ON DELETE CASCADE
-);
-
--- MENUS AND MENU ITEMS
+-- MENUS
 CREATE TABLE menus (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    branch_id INT NOT NULL,
+    id SERIAL PRIMARY KEY,
+    branch_id INT NOT NULL REFERENCES branches(id) ON DELETE CASCADE,
     name VARCHAR(100) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    active BOOLEAN NOT NULL DEFAULT TRUE,
-    FOREIGN KEY (branch_id) REFERENCES branches(id) ON DELETE CASCADE
+    active BOOLEAN NOT NULL DEFAULT TRUE
 );
+
+-- MENU ITEMS
 CREATE TABLE menu_items (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    menu_id INT NOT NULL,
+    id SERIAL PRIMARY KEY,
+    menu_id INT NOT NULL REFERENCES menus(id) ON DELETE CASCADE,
     name VARCHAR(100) NOT NULL,
-    description TINYTEXT,
-    price DECIMAL(10,2) NOT NULL,
-    available BOOLEAN DEFAULT TRUE, -- if out of stock restaurant can set it to false
-    FOREIGN KEY (menu_id) REFERENCES menus(id) ON DELETE CASCADE
+    description TEXT,
+    price NUMERIC(10,2) NOT NULL, -- DECIMAL → NUMERIC
+    available BOOLEAN DEFAULT TRUE
 );
 
--- ORDERS AND ORDER ITEMS
+-- ORDERS
 CREATE TABLE orders (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    customer_id INT NOT NULL,
-    branch_id INT NOT NULL,
-
-    estimated_delivery_time INT DEFAULT 0, -- minutes, set by restaurant based on avg_waiting_time
-    actual_delivery_time INT DEFAULT 0, -- minutes, set when delivered
-    status ENUM('preparing', 'on_the_way', 'delivered', 'cancelled') DEFAULT 'preparing',
-    
+    id SERIAL PRIMARY KEY,
+    customer_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    branch_id INT NOT NULL REFERENCES branches(id) ON DELETE CASCADE,
+    estimated_delivery_time INT DEFAULT 0, -- minutes
+    actual_delivery_time INT DEFAULT 0, -- minutes
+    status TEXT DEFAULT 'preparing',
     delivery_address VARCHAR(255) NOT NULL,
-
-    -- order_discount DECIMAL(10,2) DEFAULT 0, -- cupons or promotions (not implemented yet)
-    total DECIMAL(10,2) NOT NULL,
-    payment_method ENUM('credit_card', 'debit_card', 'cash', 'online_payment') DEFAULT 'cash',
+    total NUMERIC(10,2) NOT NULL,
+    payment_method TEXT DEFAULT 'cash',
     paid BOOLEAN DEFAULT FALSE,
-
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (customer_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (branch_id) REFERENCES branches(id) ON DELETE CASCADE
+    CHECK (status IN ('preparing', 'on_the_way', 'delivered', 'cancelled')),
+    CHECK (payment_method IN ('credit_card', 'debit_card', 'cash', 'online_payment'))
 );
+
+-- ORDER ITEMS
 CREATE TABLE order_items (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    order_id INT NOT NULL,
-    menu_item_id INT NOT NULL,
+    id SERIAL PRIMARY KEY,
+    order_id INT NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+    menu_item_id INT NOT NULL REFERENCES menu_items(id) ON DELETE CASCADE,
     quantity INT NOT NULL DEFAULT 1,
-    price DECIMAL(10,2) NOT NULL, -- price at the time of order, can be lower than current menu price if there's any discount
-    FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
-    FOREIGN KEY (menu_item_id) REFERENCES menu_items(id) ON DELETE CASCADE
+    price NUMERIC(10,2) NOT NULL
 );
 
 -- VIEWS
 
--- Active orders for branches (status 'preparing' or 'on_the_way') -- view or make backend query?
-CREATE VIEW active_orders AS
+-- Active orders for branches
+CREATE OR REPLACE VIEW active_orders AS
 SELECT
     o.id AS order_id,
     o.branch_id,
@@ -104,31 +101,27 @@ FROM orders o
 JOIN branches b ON o.branch_id = b.id
 WHERE o.status IN ('preparing', 'on_the_way');
 
-
--- Customers (active users with role 'customer')
-CREATE VIEW active_customers AS
+-- Active customers
+CREATE OR REPLACE VIEW active_customers AS
 SELECT id, name, email
 FROM users
 WHERE active = TRUE AND role = 'customer';
 
--- Restaurants with owner names
-CREATE VIEW restaurant_overview AS
+-- Restaurant overview (corrección: users.id es owner_id)
+CREATE OR REPLACE VIEW restaurant_overview AS
 SELECT r.id, r.name, u.name AS owner_name, u.id as owner_id
 FROM restaurants r
-JOIN users u ON r.owner_id = u.id;
+JOIN users u ON r.user_id = u.id;
 
-
--- vista de sucursales activas
-CREATE VIEW active_branches AS
+-- Active branches
+CREATE OR REPLACE VIEW active_branches AS
 SELECT id, restaurant_id, address, city, avg_waiting_time
 FROM branches
 WHERE active = TRUE;
 
-
 -- INSERTAR USUARIO ADMIN BASE
 INSERT INTO users (name, email, password_hash, role) VALUES
-('Admin User', 'admin@god.com', '$2b$10$KIX/0G7o8nE6Fh3fQ9e5UuJ8y1Z6H7O8P9Q2R3S4T5U6V7W8X9Y0a', 'admin');
--- password: admin123
+('Admin User', 'admin@god.com', '$2b$10$CXv3GGdhKJFSSOaPB79eDe9t61lqGcy93WNZbXJt9o/nPReyD/77a', 'admin'); -- password: admin123
 
-
+-- Probar
 SELECT * FROM users;

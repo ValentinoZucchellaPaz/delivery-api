@@ -10,7 +10,8 @@ export const userSchema = z.object({
     active: z.union([z.boolean(), z.number()]).optional()
         .transform(val => Boolean(val)), // converts 0/1 -> false/true
     created_at: z.union([z.string(), z.instanceof(Date)]).optional()
-        .transform(val => val instanceof Date ? val.toISOString() : val)
+        .transform(val => val ? new Date(val).toISOString() : null)
+
 });
 
 // -------------------- RESTAURANTS --------------------
