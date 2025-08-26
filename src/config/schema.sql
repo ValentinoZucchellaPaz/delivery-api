@@ -14,7 +14,7 @@ CREATE TABLE users (
     name VARCHAR(100) NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
-    role TEXT NOT NULL DEFAULT 'customer', -- reemplazo ENUM con TEXT + CHECK
+    role TEXT NOT NULL DEFAULT 'customer',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     active BOOLEAN NOT NULL DEFAULT TRUE,
     CHECK (role IN ('customer', 'restaurant_owner', 'admin'))
@@ -25,7 +25,7 @@ CREATE TABLE restaurants (
     id SERIAL PRIMARY KEY,
     user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     name VARCHAR(100) NOT NULL,
-    description TEXT, -- TINYTEXT → TEXT
+    description TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -55,7 +55,7 @@ CREATE TABLE menu_items (
     menu_id INT NOT NULL REFERENCES menus(id) ON DELETE CASCADE,
     name VARCHAR(100) NOT NULL,
     description TEXT,
-    price NUMERIC(10,2) NOT NULL, -- DECIMAL → NUMERIC
+    price NUMERIC(10,2) NOT NULL,
     available BOOLEAN DEFAULT TRUE
 );
 
@@ -81,7 +81,7 @@ CREATE TABLE order_items (
     id SERIAL PRIMARY KEY,
     order_id INT NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
     menu_item_id INT NOT NULL REFERENCES menu_items(id) ON DELETE CASCADE,
-    quantity INT NOT NULL DEFAULT 1,
+    quantity INT NOT NULL DEFAULT 1 CHECK (quantity >= 0),
     price NUMERIC(10,2) NOT NULL
 );
 

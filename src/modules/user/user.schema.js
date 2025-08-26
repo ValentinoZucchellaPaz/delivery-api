@@ -8,7 +8,7 @@ export const UserRoleEnum = z.enum(["admin", "restaurant_owner", "customer"])
     });
 
 export const UserSchema = z.object({
-    id: z.number().int(),
+    id: z.number().int().meta({ example: 1 }),
     name: z.string().min(2).meta({ example: "Admin" }),
     email: z.email().meta({ example: "admin@example.com" }),
     password_hash: z.string(),
