@@ -1,5 +1,5 @@
 import express from "express";
-import { getUser, getUsers, login, registerUser } from "./user.controller.js";
+import { getUser, getUsers, login, logout, refreshToken, registerUser } from "./user.controller.js";
 import { authenticateToken, authorizeRoles } from "../../middlewares/authMiddleware.js";
 import { validateParams } from "../../middlewares/validate.js";
 import { userIdParamSchema } from "./user.schema.js";
@@ -12,9 +12,7 @@ router.post("/register", registerUser);
 router.post("/login", login);
 
 
-router.post("/refresh-token", (req, res) => {
-}); // todo: get via cookie, validate and retrieve new access token
-router.post('/logout', (req, res) => {
-}); // todo: delete refresh cookie
+router.post("/refresh-token", refreshToken);
+router.post('/logout', logout);
 
 export default router;

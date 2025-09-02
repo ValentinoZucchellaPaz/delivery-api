@@ -1,11 +1,13 @@
 import express from 'express';
 import dotenv from 'dotenv';
+import cookieParser from 'cookie-parser';
 const app = express();
 
 // middlewares
 import { errorHandler } from './middlewares/errorHandler.js';
 dotenv.config();
 app.use(express.json());
+app.use(cookieParser())
 app.use(errorHandler);
 
 // swagger docs endpoint

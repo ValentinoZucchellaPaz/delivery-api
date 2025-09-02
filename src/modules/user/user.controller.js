@@ -1,7 +1,7 @@
 import bcrypt from "bcrypt";
-import { authenticateUser, createUser, getAllUsers, getUserByEmail, getUserById } from "./user.repository.js";
+import { authenticateUser, createUser, getAllUsers, getUserByEmail, getUserById, revokeRefreshToken, validateAndRotateToken } from "./user.repository.js";
 import { UserRegisterRequest, UserLoginRequest, PublicUserSchema, UserRegisterResponse } from "./user.schema.js";
-import { signJwt } from "../../utils/jwt.js";
+import { createAccessToken, signJwt } from "../../utils/jwt.js";
 
 export async function getUsers(req, res, next) {
     try {
@@ -60,7 +60,46 @@ export const login = async (req, res) => {
     const user = await authenticateUser(email, password);
     if (!user) return res.status(401).json({ error: 'Invalid credentials' });
 
-    const token = signJwt({ user_id: user.id, role: user.role }, 3600)
+    const accessToken = createAccessToken(user.id, user.role)
 
-    res.json({ token });
+    res.json({ accessToken });
 };
+
+export const refreshToken = async (req, res) => {
+    const token = req.cookies.refreshToken;
+    if (!token) return res.status(401).json({ message: "No refresh token provided" })
+
+    // validate refresh and get new tokens
+    const tokens = await validateAndRotateToken(token);
+    if (!tokens) {
+        return res.status(403).json({ message: 'Invalid or expired refresh token' });
+    }
+
+    // return access token (body) y cookie w refresh
+    res.cookie('refreshToken', tokens.refreshToken, {
+        httpOnly: true,
+        sameSite: 'strict',
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+    });
+
+    res.json(tokens.accessToken);
+}
+
+export const logout = async (req, res) => {
+    const token = req.cookies.refreshToken;
+
+    if (token) {
+        // delete from DB
+        await revokeRefreshToken(token);
+    }
+
+    // clear cookie
+    res.clearCookie('refreshToken', {
+        httpOnly: true,
+        sameSite: 'strict',
+        secure: process.env.NODE_ENV === 'production'
+    });
+
+    res.json({ message: 'Logged out successfully' });
+}

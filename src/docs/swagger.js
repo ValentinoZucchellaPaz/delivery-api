@@ -88,6 +88,31 @@ export const openApiDoc = createDocument({
                     },
                 },
             },
+        },
+        'users/refresh-token': {
+            post: {
+                summary: 'Get new access token',
+                description: 'Returns a JWT with the user credentials',
+                responses: {
+                    201: {
+                        description: 'Access token refreshed successfully',
+                        content: {
+                            "application/json": { schema: z.object({ token: z.string() }) }
+                        }
+                    },
+                },
+            },
+        },
+        'users/logout': {
+            post: {
+                summary: 'Logout user',
+                description: 'Deletes the refresh token cookie and DB row',
+                responses: {
+                    201: {
+                        description: 'Logged out successfully'
+                    },
+                },
+            },
         }
     },
 })

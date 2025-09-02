@@ -56,3 +56,7 @@ export function verifyJwt(token) {
 
     return payload;
 }
+
+export function createAccessToken(user_id, role) {
+    return signJwt({ user_id, role }, 3600)
+}

@@ -90,6 +90,9 @@ The system focuses on:
   - `quantity`
   - `price`
 
+### 4.1 **DB Diagram**
+![Diagrama de base de datos](./public/db_diagram.png)
+
 ---
 
 ## Order Flow
