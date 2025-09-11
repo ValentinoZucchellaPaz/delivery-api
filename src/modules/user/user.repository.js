@@ -1,6 +1,7 @@
 import pool from "../../config/db.js";
 import bcrypt from "bcrypt";
-import { createAccessToken, signJwt } from "../../utils/jwt.js";
+import { createTokens } from "../../utils/jwt.js";
+import { CreateUserSchema } from "./user.schema.js";
 
 /**
  * Gets all users in DB
@@ -30,7 +31,9 @@ export async function getUserById(id) {
  * @returns created user
  */
 export async function createUser(userData) {
-    const validatedUser = UserSchema.parse(userData);
+    console.log(userData);
+
+    const validatedUser = CreateUserSchema.parse(userData);
 
     const res = await pool.query(
         `INSERT INTO users (name, email, password_hash, role)
@@ -38,6 +41,8 @@ export async function createUser(userData) {
          RETURNING id`,
         [validatedUser.name, validatedUser.email, validatedUser.password_hash, validatedUser.role]
     );
+    console.log(res);
+
 
     return { id: res.rows[0].id, ...validatedUser };
 }
@@ -75,8 +80,29 @@ export async function authenticateUser(email, password) {
  * @param {string} token
  * @returns accessToken, refreshToken or null if validation fails
  */
+export async function createNewTokens(user_id, user_role) {
+
+    const { accessToken, refreshToken } = createTokens(user_id, user_role)
+
+    const refresh_expiration = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+
+    // save refresh in db
+    await pool.query(
+        `INSERT INTO refresh_tokens (user_id, token, created_at, expires_at)
+        VALUES ($1, $2, NOW(), $3)`,
+        [user_id, refreshToken, refresh_expiration]
+    );
+
+    return { accessToken, refreshToken }
+}
+
+/**
+ * Validate refresh token and create new
+ * @param {string} token
+ * @returns accessToken, refreshToken or null if validation fails
+ */
 export async function validateAndRotateToken(token) {
-    const result = await db.query(
+    const result = await pool.query(
         `SELECT * FROM refresh_tokens WHERE token = $1 AND expires_at > NOW()`,
         [token]
     );
@@ -84,17 +110,17 @@ export async function validateAndRotateToken(token) {
     if (!row) return null;
 
     // generate new refresh & access tokens
-    const refreshToken = crypto.randomBytes(64).toString('hex');
-    const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
-
     const user = await getUserById(row.user_id); // get user role
     if (!user) return null;
-    const accessToken = createAccessToken(user.id, user.role);
+
+    const { accessToken, refreshToken } = createTokens(user.id, user.role)
+    const refresh_expiration = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+
 
     // update token in db
-    await db.query(
+    await pool.query(
         `UPDATE refresh_tokens SET token = $1, created_at = NOW(), expires_at = $2 WHERE id = $3`,
-        [refreshToken, expiresAt, row.id]
+        [refreshToken, refresh_expiration, row.id]
     );
 
     // Retornar usuario y refresh token actualizado

@@ -1,13 +1,12 @@
 import bcrypt from "bcrypt";
-import { authenticateUser, createUser, getAllUsers, getUserByEmail, getUserById, revokeRefreshToken, validateAndRotateToken } from "./user.repository.js";
+import { authenticateUser, createNewTokens, createUser, getAllUsers, getUserByEmail, getUserById, revokeRefreshToken, validateAndRotateToken } from "./user.repository.js";
 import { UserRegisterRequest, UserLoginRequest, PublicUserSchema, UserRegisterResponse } from "./user.schema.js";
-import { createAccessToken, signJwt } from "../../utils/jwt.js";
 
 export async function getUsers(req, res, next) {
     try {
         const users = await getAllUsers()
         const parsedUsers = users.map(u => PublicUserSchema.parse(u))
-        return res.json({ status: "success", parsedUsers })
+        return res.json({ status: "success", users: parsedUsers })
     } catch (err) {
         next(err);
     }
@@ -60,7 +59,14 @@ export const login = async (req, res) => {
     const user = await authenticateUser(email, password);
     if (!user) return res.status(401).json({ error: 'Invalid credentials' });
 
-    const accessToken = createAccessToken(user.id, user.role)
+    const { accessToken, refreshToken } = await createNewTokens(user.id, user.role)
+
+    res.cookie('refreshToken', refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 30 * 24 * 60 * 60 * 1000
+    });
 
     res.json({ accessToken });
 };

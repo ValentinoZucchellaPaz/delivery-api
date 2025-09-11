@@ -5,11 +5,21 @@ dotenv.config();
 const { Pool } = pkg;
 
 const pool = new Pool({
-    connectionString: process.env.DB_CONNECTION_STR,
-    ssl: {
-        rejectUnauthorized: false // Supabase requires this option
-    },
+    // supabase
+    // connectionString: process.env.DB_CONNECTION_STR,
+    // ssl: {
+    //     rejectUnauthorized: false // Supabase requires this option
+    // },
+    // local
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
+    max: 10, // n° of pool connections
+    idleTimeoutMillis: 30000,
 });
+
 
 (async function testConnection() {
     try {
@@ -17,7 +27,7 @@ const pool = new Pool({
         console.log("Succesful connection to Postgres:", res.rows[0].currenttime);
     } catch (err) {
         console.error("Error connecting to Postgres:", err);
-        process.exit(1);
+        // process.exit(1);
     }
 })();
 

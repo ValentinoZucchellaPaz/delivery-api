@@ -1,0 +1,15 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16
+    restart: always
+    container_name: deliverydb
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: deliverydb
+    ports:
+      - "5433:5432"
+    volumes:
+      - ./db/scheme.sql:/docker-entrypoint-initdb.d/scheme.sql

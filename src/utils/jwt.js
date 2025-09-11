@@ -57,6 +57,9 @@ export function verifyJwt(token) {
     return payload;
 }
 
-export function createAccessToken(user_id, role) {
-    return signJwt({ user_id, role }, 3600)
+export function createTokens(user_id, role) {
+    const refreshToken = crypto.randomBytes(64).toString('hex');
+    const accessToken = signJwt({ user_id, role }, 3600) // 1 hr
+
+    return { refreshToken, accessToken }
 }

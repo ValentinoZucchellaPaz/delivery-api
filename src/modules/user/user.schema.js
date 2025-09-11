@@ -22,6 +22,10 @@ export const UserSchema = z.object({
 });
 
 export const PublicUserSchema = UserSchema.omit({ password_hash: true })
+export const CreateUserSchema = UserSchema.omit({ id: true, active: true, created_at: true })
+export const UserRegisterResponse = UserSchema.omit({ password_hash: true, active: true, created_at: true }).meta({
+    id: "UserRegisterResponseDTO"
+})
 
 export const UserRegisterRequest = z.object({
     name: z.string().min(2).meta({ description: "Name", example: "John Doe" }),
@@ -39,17 +43,6 @@ export const UserLoginRequest = z.object({
     id: "UserLoginRequestDTO"
 });
 
-export const UserRegisterResponse = z.object({
-    status: z.literal("success"),
-    user: z.object({
-        id: z.int().meta({ example: 1 }),
-        name: z.string().meta({ example: 'Admin' }),
-        email: z.email().meta({ example: "admin@example.com" }),
-        role: UserRoleEnum
-    })
-}).meta({
-    id: "UserRegisterResponseDTO"
-});
 
 export const UserListResponse = z.object({
     status: z.literal("success"),

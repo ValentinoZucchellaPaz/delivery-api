@@ -64,7 +64,7 @@ export const openApiDoc = createDocument({
                     201: {
                         description: 'Created',
                         content: {
-                            "application/json": { schema: UserRegisterResponse }
+                            "application/json": { schema: z.object({ status: z.string().meta({ example: "success" }), user: UserRegisterResponse }) }
                         }
                     },
                 },
