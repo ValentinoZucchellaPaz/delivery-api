@@ -8,7 +8,6 @@ import { errorHandler } from './middlewares/errorHandler.js';
 dotenv.config();
 app.use(express.json());
 app.use(cookieParser())
-app.use(errorHandler);
 
 // swagger docs endpoint
 import swaggerUi from 'swagger-ui-express'
@@ -18,11 +17,14 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(openApiDoc));
 // routes
 import userRoutes from './modules/user/user.routes.js';
 import orderRoutes from './modules/order/order.routes.js';
+import authRoutes from './modules/auth/auth.routes.js';
 app.use('/orders', orderRoutes);
 app.use('/users', userRoutes)
+app.use('/auth', authRoutes)
 
 app.get('/', (req, res) => {
     res.send('Welcome to the Delivery App API');
 });
 
+app.use(errorHandler);
 export default app;

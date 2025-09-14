@@ -1,54 +1,64 @@
-import z from "zod";
+import { ZodError } from "zod";
+import { AppError, ValidationError } from "../utils/errors.js";
 
-// middleware/errorHandler.js
 export function errorHandler(err, req, res, next) {
-    console.log("Error capturado por errorHandler middleware");
-    console.error(err); // log en consola para debugging
+    console.error("Error capturado:", err);
 
-    // Zod validation errors
-    if (err instanceof z.ZodError) {
-        return res.status(400).json({
+    // validation errors (Zod)
+    if (err instanceof ZodError) {
+        const details = err.errors?.map(issue => ({
+            path: issue.path.join("."),
+            message: issue.message,
+        })) ?? JSON.parse(err.message);
+        const valError = new ValidationError(details);
+        return res.status(valError.statusCode).json({
             status: "error",
-            type: "validation",
-            details: JSON.parse(err.message)
+            type: valError.type,
+            message: valError.message,
+            details: valError.details,
         });
     }
 
-    // MySQL errors (ex. duplicate entry, foreign key fail)
-    if (err?.code) {
-        let message = err.message;
-        console.log('hay que rico papi');
+    if (err instanceof AppError) {
+        return res.status(err.statusCode).json({
+            status: "error",
+            type: err.type,
+            message: err.message,
+            ...(err.details ? { details: err.details } : {}),
+        });
+    }
 
-
+    // db error (Postgres)
+    if (err.code) {
+        let message = "Database error";
         switch (err.code) {
-            case "ER_DUP_ENTRY":
+            case "23505": // unique_violation
                 message = "Duplicate entry";
                 break;
-            case "ER_NO_REFERENCED_ROW":
-            case "ER_NO_REFERENCED_ROW_2":
+            case "23503": // foreign_key_violation
                 message = "Foreign key constraint failed";
                 break;
         }
-
+        //         switch (err.code) {
+        //             case "ER_DUP_ENTRY":
+        //                 message = "Duplicate entry";
+        //                 break;
+        //             case "ER_NO_REFERENCED_ROW":
+        //             case "ER_NO_REFERENCED_ROW_2":
+        //                 message = "Foreign key constraint failed";
+        //                 break;
+        //         }
         return res.status(400).json({
             status: "error",
             type: "database",
-            message
+            message,
         });
     }
 
-    // Auth errors and others
-    if (err.statusCode) {
-        return res.status(err.statusCode).json({
-            status: "error",
-            message: err.message
-        });
-    }
-
-    // Default to 500 server error
+    // generic error 500
     res.status(500).json({
         status: "error",
+        type: "internal",
         message: "Internal server error",
-        code: err.code || "INTERNAL_ERROR"
     });
 }

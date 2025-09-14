@@ -67,3 +67,9 @@ export const UserListResponse = z.object({
 export const userIdParamSchema = z.object({
     id: z.string().regex(/^\d+$/).transform(val => parseInt(val, 10)) // transforms to number, extra security
 });
+
+export const UserUpdateSchema = z.object({
+    name: z.string().optional(),
+    email: z.email().optional(),
+    role: z.enum(["customer", "restaurant_owner", "admin"]).optional(),
+});

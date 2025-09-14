@@ -1,6 +1,14 @@
-import bcrypt from "bcrypt";
-import { authenticateUser, createNewTokens, createUser, getAllUsers, getUserByEmail, getUserById, revokeRefreshToken, validateAndRotateToken } from "./user.repository.js";
-import { UserRegisterRequest, UserLoginRequest, PublicUserSchema, UserRegisterResponse } from "./user.schema.js";
+import { ConflictError, NotFoundError, ValidationError } from "../../utils/errors.js";
+import { getAllUsers, getUserById, setUserActive, updateUser } from "./user.repository.js";
+import { PublicUserSchema, UserUpdateSchema } from "./user.schema.js";
+
+// TODO: updateUser, deleteUser
+
+/**
+ * ====================================================
+ * ------------------  USER METHODS  ------------------
+ * ====================================================
+ */
 
 export async function getUsers(req, res, next) {
     try {
@@ -27,85 +35,32 @@ export async function getUser(req, res, next) {
     }
 }
 
-export async function registerUser(req, res, next) {
+export async function editUser(req, res, next) {
     try {
-        const { name, email, password, role } = UserRegisterRequest.parse(req.body);
-
-        // Verify existing email
-        const existingUser = await getUserByEmail(email);
-        if (existingUser) {
-            return res.status(400).json({ status: "error", message: "Email already in use" });
-        }
-
-        // Hash password
-        const saltRounds = process.env.SALT_ROUNDS || 10;
-        const password_hash = await bcrypt.hash(password, saltRounds);
-
-        // Create user in DB
-        const newUser = await createUser({ name, email, password_hash, role });
-        const parsedUser = UserRegisterResponse.parse({ id: newUser.id, name, email, role })
-
-
-        res.status(201).json({ status: "success", user: parsedUser });
+        const parsed = UserUpdateSchema.parse(req.body);
+        if (Object.keys(parsed).length == 0) throw new ValidationError('Must change at least 1 field of user: name, email or role')
+        const user = await updateUser(Number(req.params.id), parsed);
+        if (!user) throw new NotFoundError('User not found')
+        res.json(user);
     } catch (err) {
-        next(err); // middleware for global error handling
+        next(err);
     }
 }
 
-
-export const login = async (req, res) => {
-    const { email, password } = UserLoginRequest.parse(req.body);
-
-    const user = await authenticateUser(email, password);
-    if (!user) return res.status(401).json({ error: 'Invalid credentials' });
-
-    const { accessToken, refreshToken } = await createNewTokens(user.id, user.role)
-
-    res.cookie('refreshToken', refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        maxAge: 30 * 24 * 60 * 60 * 1000
-    });
-
-    res.json({ accessToken });
-};
-
-export const refreshToken = async (req, res) => {
-    const token = req.cookies.refreshToken;
-    if (!token) return res.status(401).json({ message: "No refresh token provided" })
-
-    // validate refresh and get new tokens
-    const tokens = await validateAndRotateToken(token);
-    if (!tokens) {
-        return res.status(403).json({ message: 'Invalid or expired refresh token' });
+export async function deactivateUser(req, res, next) {
+    try {
+        const user = await setUserActive(Number(req.params.id), false);
+        res.json(user);
+    } catch (err) {
+        next(err);
     }
-
-    // return access token (body) y cookie w refresh
-    res.cookie('refreshToken', tokens.refreshToken, {
-        httpOnly: true,
-        sameSite: 'strict',
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
-    });
-
-    res.json(tokens.accessToken);
 }
 
-export const logout = async (req, res) => {
-    const token = req.cookies.refreshToken;
-
-    if (token) {
-        // delete from DB
-        await revokeRefreshToken(token);
+export async function reactivateUser(req, res, next) {
+    try {
+        const user = await setUserActive(Number(req.params.id), true);
+        res.json(user);
+    } catch (err) {
+        next(err);
     }
-
-    // clear cookie
-    res.clearCookie('refreshToken', {
-        httpOnly: true,
-        sameSite: 'strict',
-        secure: process.env.NODE_ENV === 'production'
-    });
-
-    res.json({ message: 'Logged out successfully' });
 }
