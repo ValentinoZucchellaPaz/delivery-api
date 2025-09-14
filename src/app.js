@@ -18,9 +18,13 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(openApiDoc));
 import userRoutes from './modules/user/user.routes.js';
 import orderRoutes from './modules/order/order.routes.js';
 import authRoutes from './modules/auth/auth.routes.js';
+import restaurantRoutes from './modules/restaurant/restaurant.routes.js'
+import branchRoutes from './modules/branch/branch.routes.js';
 app.use('/orders', orderRoutes);
 app.use('/users', userRoutes)
 app.use('/auth', authRoutes)
+app.use('/restaurant', restaurantRoutes)
+app.use('/branch', branchRoutes)
 
 app.get('/', (req, res) => {
     res.send('Welcome to the Delivery App API');

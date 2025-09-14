@@ -77,7 +77,7 @@ CREATE INDEX idx_branches_city_active ON branches (city, active);
 CREATE TABLE menus (
     id SERIAL PRIMARY KEY,
     branch_id INT NOT NULL REFERENCES branches(id) ON DELETE CASCADE,
-    name VARCHAR(100) NOT NULL,
+    name VARCHAR(100) NOT NULL UNIQUE,
     created_at timestamptz DEFAULT CURRENT_TIMESTAMP,
     active BOOLEAN NOT NULL DEFAULT TRUE
 );
@@ -85,7 +85,7 @@ CREATE TABLE menus (
 CREATE INDEX idx_menus_branch_id ON menus (branch_id);
 
 -- ===================================================
--- MENU ITEMS
+-- MENU ITEMS ------------------------------------------------------future check if necessary or json prop in menu
 -- ===================================================
 CREATE TABLE menu_items (
     id SERIAL PRIMARY KEY,

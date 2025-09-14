@@ -1,8 +1,6 @@
-import pkg from 'pg';
+import { Pool } from 'pg';
 import dotenv from 'dotenv';
 dotenv.config();
-
-const { Pool } = pkg;
 
 const pool = new Pool({
     // supabase
