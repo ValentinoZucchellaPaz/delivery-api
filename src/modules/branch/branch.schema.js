@@ -17,3 +17,28 @@ export const createMenuSchema = z.object({
     name: z.string().min(3),
     items: z.array(menuItemSchema).optional().default([]),
 });
+
+export const updateBranchSchema = z.object({
+    address: z.string().optional(),
+    city: z.string().optional(),
+    avg_waiting_time: z.number().optional(),
+    active: z.boolean().optional(),
+});
+
+export const publicBranchSchema = z.object({
+    id: z.number(),
+    restaurant_id: z.number(),
+    address: z.string().optional(),
+    city: z.string().optional(),
+    avg_waiting_time: z.number().optional(),
+    created_at: z.union([z.string(), z.instanceof(Date)])
+        .transform(val => new Date(val).toISOString())
+        .meta({ example: "2025-08-26T10:00:00Z" })
+})
+
+export const editMenuSchema = z.object({
+    name: z.string().optional(),
+    active: z.boolean().optional(),
+    add: z.array(menuItemSchema).optional().default([]),
+    delete: z.array(z.number()).optional().default([]),
+});

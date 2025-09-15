@@ -77,9 +77,10 @@ CREATE INDEX idx_branches_city_active ON branches (city, active);
 CREATE TABLE menus (
     id SERIAL PRIMARY KEY,
     branch_id INT NOT NULL REFERENCES branches(id) ON DELETE CASCADE,
-    name VARCHAR(100) NOT NULL UNIQUE,
+    name VARCHAR(100) NOT NULL,
     created_at timestamptz DEFAULT CURRENT_TIMESTAMP,
-    active BOOLEAN NOT NULL DEFAULT TRUE
+    active BOOLEAN NOT NULL DEFAULT TRUE,
+    CONSTRAINT unique_branch_menu_name UNIQUE (branch_id, name)
 );
 
 CREATE INDEX idx_menus_branch_id ON menus (branch_id);
@@ -93,7 +94,8 @@ CREATE TABLE menu_items (
     name VARCHAR(100) NOT NULL,
     description TEXT,
     price NUMERIC(10,2) NOT NULL CHECK (price >= 0),
-    available BOOLEAN DEFAULT TRUE
+    available BOOLEAN DEFAULT TRUE,
+    CONSTRAINT unique_menuitem_name_per_menu UNIQUE (menu_id, name)
 );
 
 CREATE INDEX idx_menu_items_menu_id ON menu_items (menu_id);

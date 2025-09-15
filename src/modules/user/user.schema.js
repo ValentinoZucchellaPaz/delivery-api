@@ -73,3 +73,4 @@ export const UserUpdateSchema = z.object({
     email: z.email().optional(),
     role: z.enum(["customer", "restaurant_owner", "admin"]).optional(),
 });
+

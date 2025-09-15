@@ -5,3 +5,8 @@ export const createRestaurantSchema = z.object({
     name: z.string().min(2),
     description: z.string().optional(),
 });
+
+export const updateRestaurantSchema = z.object({
+    name: z.string().min(2).optional(),
+    description: z.string().optional(),
+});

@@ -39,3 +39,26 @@ export async function getBranchesByRestaurantId(restaurant_id) {
     );
     return rows;
 }
+
+export async function updateRestaurant(id, data) {
+    const fields = [];
+    const values = [];
+    let idx = 1;
+
+    for (const key of ["name", "description"]) {
+        if (data[key] !== undefined) {
+            fields.push(`${key} = $${idx}`);
+            values.push(data[key]);
+            idx++;
+        }
+    }
+
+    if (!fields.length) return null;
+
+    values.push(id);
+    const { rows } = await pool.query(
+        `UPDATE restaurants SET ${fields.join(", ")} WHERE id = $${idx} RETURNING id, user_id, name, description, created_at`,
+        values
+    );
+    return rows[0];
+}

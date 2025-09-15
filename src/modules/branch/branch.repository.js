@@ -29,7 +29,7 @@ export async function createMenu(branch_id, name) {
   return rows[0];
 }
 
-// Crear items en bulk
+// bulk creation
 export async function createMenuItems(menu_id, items) {
   if (!items || items.length === 0) return [];
 
@@ -62,7 +62,7 @@ export async function getBranchWithOwner(branch_id) {
 
 export async function getAllMenusByBranch(branch_id) {
   const { rows: menus } = await pool.query(
-    `SELECT id, branch_id, name, created_at
+    `SELECT id, branch_id, name, created_at, active
      FROM menus
      WHERE branch_id = $1
      ORDER BY created_at ASC`,
@@ -90,4 +90,68 @@ export async function getAllMenusByBranch(branch_id) {
   }));
 
   return result;
+}
+
+export async function updateBranch(id, data) {
+  const fields = [];
+  const values = [];
+  let idx = 1;
+
+  for (const key of ["address", "active", "city", "avg_waiting_time"]) {
+    if (data[key] !== undefined) {
+      fields.push(`${key} = $${idx}`);
+      values.push(data[key]);
+      idx++;
+    }
+  }
+
+  if (!fields.length) return null;
+
+  values.push(id);
+  const { rows } = await pool.query(
+    `UPDATE branches SET ${fields.join(", ")} WHERE id = $${idx} RETURNING id, restaurant_id, address, city, avg_waiting_time, active, created_at`,
+    values
+  );
+  return rows[0];
+}
+
+export async function updateMenu(menu_id, data) {
+  const fields = [];
+  const values = [];
+  let idx = 1;
+
+  for (const key of ["name", "active"]) {
+    if (data[key] !== undefined) {
+      fields.push(`${key} = $${idx}`);
+      values.push(data[key]);
+      idx++;
+    }
+  }
+
+  if (!fields.length) return null;
+
+  values.push(menu_id);
+  const { rows } = await pool.query(
+    `UPDATE menus SET ${fields.join(", ")} WHERE id = $${idx} RETURNING id, branch_id, name, active, created_at`,
+    values
+  );
+  return rows[0];
+}
+
+export async function deleteMenuItems(itemIds) {
+  if (!itemIds.length) return;
+  await db.query(`DELETE FROM menu_items WHERE id = ANY($1::int[])`, [itemIds]);
+}
+
+
+export async function getMenuOwners(menu_id) {
+  const { rows } = await pool.query(`
+      SELECT b.id as branch_id, r.user_id as owner_id
+      FROM menus m
+      JOIN branches b ON b.id = m.branch_id
+      JOIN restaurants r ON r.id = b.restaurant_id
+      WHERE m.id = $1
+    `, [menu_id]);
+
+  return rows[0];
 }
