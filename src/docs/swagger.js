@@ -8,6 +8,9 @@ import {
     UserRegisterResponse
 } from '../modules/user/user.schema.js';
 
+import { createRestaurantSchema, publicRestaurantSchema, RestaurantListResponse, updateRestaurantSchema } from '../modules/restaurant/restaurant.schema.js';
+import { BranchListResponse, createBranchSchema, createMenuSchema, editMenuSchema, MenuListResponse, publicBranchSchema, publicMenuSchema, updateBranchSchema } from '../modules/branch/branch.schema.js';
+
 export const openApiDoc = createDocument({
     openapi: '3.1.0',
     info: {
@@ -21,63 +24,67 @@ export const openApiDoc = createDocument({
         },
     },
     paths: {
+        // === Users ===
         '/users': {
             get: {
                 summary: 'Gets all users',
-                description: 'Returns a list of all users',
-                security: [{ bearerAuth: [] }], // protected endpoint
+                security: [{ bearerAuth: [] }],
                 "x-roles": ["admin"],
                 responses: {
                     200: {
-                        description: 'List of users retrieved succesfully',
+                        description: 'List of users retrieved successfully',
                         content: {
                             "application/json": { schema: UserListResponse }
                         }
-                    },
-                },
-            },
+                    }
+                }
+            }
         },
-        '/users/:id': {
+        '/users/{id}': {
             get: {
                 summary: 'Gets user by id',
-                security: [{ bearerAuth: [] }], // protected endpoint
+                security: [{ bearerAuth: [] }],
                 "x-roles": ["admin"],
                 responses: {
                     200: {
-                        description: 'User retrieved succesfully',
+                        description: 'User retrieved successfully',
                         content: {
                             "application/json": { schema: PublicUserSchema }
                         }
-                    },
-                },
-            },
+                    }
+                }
+            }
         },
         '/users/register': {
             post: {
-                summary: 'Create user',
+                summary: 'Register user',
                 requestBody: {
                     content: {
-                        'application/json': { schema: UserRegisterRequest }, // input
-                    },
+                        'application/json': { schema: UserRegisterRequest }
+                    }
                 },
                 responses: {
                     201: {
                         description: 'Created',
                         content: {
-                            "application/json": { schema: z.object({ status: z.string().meta({ example: "success" }), user: UserRegisterResponse }) }
+                            "application/json": {
+                                schema: z.object({
+                                    status: z.string().meta({ example: "success" }),
+                                    user: UserRegisterResponse
+                                })
+                            }
                         }
-                    },
-                },
-            },
+                    }
+                }
+            }
         },
-        'users/login': {
+        '/users/login': {
             post: {
                 summary: 'Login user',
-                description: 'Returns a JWT with the user credentials',
                 requestBody: {
                     content: {
-                        'application/json': { schema: UserLoginRequest }, // input
-                    },
+                        'application/json': { schema: UserLoginRequest }
+                    }
                 },
                 responses: {
                     201: {
@@ -85,34 +92,208 @@ export const openApiDoc = createDocument({
                         content: {
                             "application/json": { schema: z.object({ token: z.string() }) }
                         }
-                    },
-                },
-            },
+                    }
+                }
+            }
         },
-        'users/refresh-token': {
+        '/users/refresh-token': {
             post: {
-                summary: 'Get new access token',
-                description: 'Returns a JWT with the user credentials',
+                summary: 'Refresh access token',
                 responses: {
                     201: {
                         description: 'Access token refreshed successfully',
                         content: {
                             "application/json": { schema: z.object({ token: z.string() }) }
                         }
-                    },
-                },
-            },
+                    }
+                }
+            }
         },
-        'users/logout': {
+        '/users/logout': {
             post: {
                 summary: 'Logout user',
-                description: 'Deletes the refresh token cookie and DB row',
+                responses: {
+                    201: { description: 'Logged out successfully' }
+                }
+            }
+        },
+
+        // === Restaurants ===
+        '/restaurants': {
+            post: {
+                summary: 'Create restaurant',
+                security: [{ bearerAuth: [] }],
+                "x-roles": ["admin"],
+                requestBody: {
+                    content: { 'application/json': { schema: createRestaurantSchema } }
+                },
                 responses: {
                     201: {
-                        description: 'Logged out successfully'
-                    },
-                },
+                        description: 'Restaurant created',
+                        content: { "application/json": { schema: publicRestaurantSchema } }
+                    }
+                }
             },
+            get: {
+                summary: 'Get all restaurants',
+                security: [{ bearerAuth: [] }],
+                "x-roles": ["admin"],
+                responses: {
+                    200: {
+                        description: 'List of restaurants',
+                        content: { "application/json": { schema: RestaurantListResponse } }
+                    }
+                }
+            }
+        },
+        '/restaurants/{id}': {
+            get: {
+                summary: 'Get restaurant by ID',
+                security: [{ bearerAuth: [] }],
+                "x-roles": ["admin"],
+                responses: {
+                    200: {
+                        description: 'Restaurant retrieved',
+                        content: { "application/json": { schema: publicRestaurantSchema } }
+                    }
+                }
+            },
+            patch: {
+                summary: 'Update restaurant',
+                security: [{ bearerAuth: [] }],
+                "x-roles": ["admin"],
+                requestBody: {
+                    content: { 'application/json': { schema: updateRestaurantSchema } }
+                },
+                responses: {
+                    200: {
+                        description: 'Restaurant updated',
+                        content: { "application/json": { schema: publicRestaurantSchema } }
+                    }
+                }
+            }
+        },
+        '/restaurants/{id}/branches': {
+            get: {
+                summary: 'Get branches by restaurant',
+                security: [{ bearerAuth: [] }],
+                "x-roles": ["admin"],
+                responses: {
+                    200: {
+                        description: 'List of branches',
+                        content: { "application/json": { schema: BranchListResponse } }
+                    }
+                }
+            }
+        },
+
+        // === Branches ===
+        '/branches': {
+            post: {
+                summary: 'Create branch',
+                security: [{ bearerAuth: [] }],
+                "x-roles": ["restaurant_owner"],
+                requestBody: {
+                    content: { 'application/json': { schema: createBranchSchema } }
+                },
+                responses: {
+                    201: {
+                        description: 'Branch created',
+                        content: { "application/json": { schema: publicBranchSchema } }
+                    }
+                }
+            }
+        },
+        '/branches/{id}': {
+            patch: {
+                summary: 'Update branch',
+                security: [{ bearerAuth: [] }],
+                "x-roles": ["restaurant_owner"],
+                requestBody: {
+                    content: { 'application/json': { schema: updateBranchSchema } }
+                },
+                responses: {
+                    200: {
+                        description: 'Branch updated',
+                        content: { "application/json": { schema: publicBranchSchema } }
+                    }
+                }
+            }
+        },
+        '/branches/{id}/active': {
+            patch: {
+                summary: 'Activate/deactivate branch',
+                security: [{ bearerAuth: [] }],
+                "x-roles": ["restaurant_owner"],
+                requestBody: {
+                    content: { 'application/json': { schema: z.object({ active: z.boolean() }) } }
+                },
+                responses: {
+                    200: {
+                        description: 'Branch updated',
+                        content: { "application/json": { schema: publicBranchSchema } }
+                    }
+                }
+            }
+        },
+
+        // === Menus ===
+        '/branches/{id}/menu': {
+            post: {
+                summary: 'Create menu with items',
+                security: [{ bearerAuth: [] }],
+                "x-roles": ["restaurant_owner"],
+                requestBody: {
+                    content: { 'application/json': { schema: createMenuSchema } }
+                },
+                responses: {
+                    201: {
+                        description: 'Menu created',
+                        content: { "application/json": { schema: publicMenuSchema } }
+                    }
+                }
+            },
+            get: {
+                summary: 'Get all menus for a branch',
+                responses: {
+                    200: {
+                        description: 'List of menus',
+                        content: { "application/json": { schema: MenuListResponse } }
+                    }
+                }
+            }
+        },
+        '/branches/{id}/menu/{menu_id}': {
+            patch: {
+                summary: 'Edit menu (add/delete items)',
+                security: [{ bearerAuth: [] }],
+                "x-roles": ["restaurant_owner"],
+                requestBody: {
+                    content: { 'application/json': { schema: editMenuSchema } }
+                },
+                responses: {
+                    200: {
+                        description: 'Menu updated',
+                        content: { "application/json": { schema: publicMenuSchema } }
+                    }
+                }
+            }
+        },
+        '/branches/{id}/menu/{menu_id}/active': {
+            patch: {
+                summary: 'Activate/deactivate menu',
+                security: [{ bearerAuth: [] }],
+                "x-roles": ["restaurant_owner"],
+                requestBody: {
+                    content: { 'application/json': { schema: z.object({ active: z.boolean() }) } }
+                },
+                responses: {
+                    200: {
+                        description: 'Menu updated',
+                        content: { "application/json": { schema: publicMenuSchema } }
+                    }
+                }
+            }
         }
-    },
-})
+    }
+});
