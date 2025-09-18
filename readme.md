@@ -2,12 +2,12 @@
 
 ## Overview
 **Couriers Delivery Service** is a backend RESTful API designed for a food delivery platform.  
-It allows **customers** to place orders from **restaurants**, calculates **total price** and **estimated delivery time**, and manages **order status updates** throughout the delivery process.  
+It allows **customers** to place orders from **restaurants branches**, calculates **total price** and **estimated delivery time**, and manages **order status updates** throughout the delivery process.  
 
 The system focuses on:
 - Managing **users** (customers, restaurants, and admins).
-- Handling **restaurants**, their **menus**, and **preparation times**.
-- Processing **orders**, updating their status from **pending** to **delivered**, and marking them as **paid** upon delivery.
+- Handling **restaurants branches**, their **menus**, and **preparation times**.
+- Processing **orders**, updating their status from **pending** to **preparing** to **delivered**, and marking them as **paid** upon delivery (or before).
 
 ---
 
@@ -80,6 +80,7 @@ The system focuses on:
   - `total`
   - `paid` (boolean, `true` once delivered)
   - `created_at`
+  - plus timestamps for trazability (when was each status set)
 
 ##### Order Item
 - Represents a item in an order, an item can only belong to one order

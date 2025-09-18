@@ -10,6 +10,7 @@ import {
 
 import { createRestaurantSchema, publicRestaurantSchema, RestaurantListResponse, updateRestaurantSchema } from '../modules/restaurant/restaurant.schema.js';
 import { BranchListResponse, createBranchSchema, createMenuSchema, editMenuSchema, MenuListResponse, publicBranchSchema, publicMenuSchema, updateBranchSchema } from '../modules/branch/branch.schema.js';
+import { CreateOrderSchema, OrderListResponse, PublicOrderSchema, UpdateOrderStatusSchema } from '../modules/order/order.schema.js';
 
 export const openApiDoc = createDocument({
     openapi: '3.1.0',
@@ -188,7 +189,7 @@ export const openApiDoc = createDocument({
         },
 
         // === Branches ===
-        '/branches': {
+        '/branch': {
             post: {
                 summary: 'Create branch',
                 security: [{ bearerAuth: [] }],
@@ -204,7 +205,7 @@ export const openApiDoc = createDocument({
                 }
             }
         },
-        '/branches/{id}': {
+        '/branch/{id}': {
             patch: {
                 summary: 'Update branch',
                 security: [{ bearerAuth: [] }],
@@ -220,7 +221,7 @@ export const openApiDoc = createDocument({
                 }
             }
         },
-        '/branches/{id}/active': {
+        '/branch/{id}/active': {
             patch: {
                 summary: 'Activate/deactivate branch',
                 security: [{ bearerAuth: [] }],
@@ -238,7 +239,7 @@ export const openApiDoc = createDocument({
         },
 
         // === Menus ===
-        '/branches/{id}/menu': {
+        '/branch/{id}/menu': {
             post: {
                 summary: 'Create menu with items',
                 security: [{ bearerAuth: [] }],
@@ -263,7 +264,7 @@ export const openApiDoc = createDocument({
                 }
             }
         },
-        '/branches/{id}/menu/{menu_id}': {
+        '/branch/{id}/menu/{menu_id}': {
             patch: {
                 summary: 'Edit menu (add/delete items)',
                 security: [{ bearerAuth: [] }],
@@ -279,7 +280,7 @@ export const openApiDoc = createDocument({
                 }
             }
         },
-        '/branches/{id}/menu/{menu_id}/active': {
+        '/branch/{id}/menu/{menu_id}/active': {
             patch: {
                 summary: 'Activate/deactivate menu',
                 security: [{ bearerAuth: [] }],
@@ -294,6 +295,79 @@ export const openApiDoc = createDocument({
                     }
                 }
             }
+        },
+        // === Orders ===
+        '/order': {
+            post: {
+                summary: 'Create order',
+                description: 'Customer creates a new order for a branch',
+                security: [{ bearerAuth: [] }],
+                "x-roles": ["customer"],
+                requestBody: {
+                    content: { 'application/json': { schema: CreateOrderSchema } }
+                },
+                responses: {
+                    201: {
+                        description: 'Order created successfully',
+                        content: { "application/json": { schema: PublicOrderSchema } }
+                    }
+                }
+            },
+            get: {
+                summary: 'List my orders',
+                description: 'Get all orders for the authenticated customer',
+                security: [{ bearerAuth: [] }],
+                "x-roles": ["customer"],
+                responses: {
+                    200: {
+                        description: 'List of orders',
+                        content: { "application/json": { schema: OrderListResponse } }
+                    }
+                }
+            }
+        },
+        '/order/{id}': {
+            get: {
+                summary: 'Get order by ID',
+                security: [{ bearerAuth: [] }],
+                "x-roles": ["customer", "restaurant_owner"],
+                responses: {
+                    200: {
+                        description: 'Order retrieved',
+                        content: { "application/json": { schema: PublicOrderSchema } }
+                    }
+                }
+            },
+            patch: {
+                summary: 'Update order status',
+                description: 'Restaurant owner can update order status',
+                security: [{ bearerAuth: [] }],
+                "x-roles": ["restaurant_owner"],
+                requestBody: {
+                    content: { 'application/json': { schema: UpdateOrderStatusSchema } }
+                },
+                responses: {
+                    200: {
+                        description: 'Order updated',
+                        content: { "application/json": { schema: PublicOrderSchema } }
+                    }
+                }
+            }
+        },
+        '/order/{id}/cancel': {
+            patch: {
+                summary: 'Cancel order',
+                description: 'Customer can cancel their own order if it is not delivered/paid',
+                security: [{ bearerAuth: [] }],
+                "x-roles": ["customer"],
+                responses: {
+                    200: {
+                        description: 'Order cancelled',
+                        content: { "application/json": { schema: PublicOrderSchema } }
+                    }
+                }
+            }
         }
+
     }
 });
