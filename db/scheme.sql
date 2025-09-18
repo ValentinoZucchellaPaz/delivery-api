@@ -23,7 +23,7 @@ DROP TYPE IF EXISTS payment_method CASCADE;
 -- ENUMS
 -- ===================================================
 CREATE TYPE user_role AS ENUM ('customer', 'restaurant_owner', 'admin'); -- in the future there can be a `restaurant_branch`
-CREATE TYPE order_status AS ENUM ('preparing', 'on_the_way', 'delivered', 'cancelled');
+CREATE TYPE order_status AS ENUM ('pending', 'preparing', 'on_the_way', 'delivered', 'cancelled');
 CREATE TYPE payment_method AS ENUM ('credit_card', 'debit_card', 'cash', 'online_payment');
 
 -- ===================================================
@@ -86,7 +86,7 @@ CREATE TABLE menus (
 CREATE INDEX idx_menus_branch_id ON menus (branch_id);
 
 -- ===================================================
--- MENU ITEMS ------------------------------------------------------future check if necessary or json prop in menu
+-- MENU ITEMS
 -- ===================================================
 CREATE TABLE menu_items (
     id SERIAL PRIMARY KEY,
@@ -108,13 +108,26 @@ CREATE TABLE orders (
     id SERIAL PRIMARY KEY,
     customer_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     branch_id INT NOT NULL REFERENCES branches(id) ON DELETE CASCADE,
-    estimated_delivery_time INT DEFAULT 0 CHECK (estimated_delivery_time >= 0),
-    actual_delivery_time INT DEFAULT 0 CHECK (actual_delivery_time >= 0),
-    status order_status DEFAULT 'preparing',
+
+    -- delivery info
     delivery_address VARCHAR(255) NOT NULL,
+
+    -- timestamps for trazability
+    estimated_ready_at timestamptz,
+    accepted_at timestamptz,
+    prepared_at timestamptz,
+    sent_at timestamptz,
+    delivered_at timestamptz,
+    paid_at timestamptz,
+    cancelled_at timestamptz,
+
+    status order_status DEFAULT 'pending',
+
+    -- $$$
     total NUMERIC(10,2) NOT NULL CHECK (total >= 0),
     payment_method payment_method DEFAULT 'cash',
     paid BOOLEAN DEFAULT FALSE,
+
     created_at timestamptz DEFAULT CURRENT_TIMESTAMP
 );
 
