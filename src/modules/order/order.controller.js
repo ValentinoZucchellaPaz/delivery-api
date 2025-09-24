@@ -17,13 +17,13 @@ export async function createOrder(req, res, next) {
         const parsed = createOrderSchema.parse(req.body);
 
         // TODO: idempotency; if key provided, check
-        // if (idempotencyKey) {
-        //     const idemp = await repo.getIdempotency(idempotencyKey);
-        //     if (idemp && idemp.order_id) {
-        //         // return saved response (assume response stored)
-        //         return res.status(200).json(idemp.response);
-        //     }
-        // }
+        if (idempotencyKey) {
+            const idemp = await repo.getIdempotency(idempotencyKey);
+            if (idemp && idemp.order_id) {
+                // return saved response (assume response stored)
+                return res.status(200).json(idemp.response);
+            }
+        }
 
         // validate branch exists and get avg_waiting_time + owner
         const branchInfo = await repo.getBranchInfo(parsed.branch_id);
@@ -80,11 +80,11 @@ export async function createOrder(req, res, next) {
         // create items
         const createdItems = await repo.createOrderItems(order.id, itemsWithPrice);
 
-        // optional: save idempotency
-        // if (idempotencyKey) {
-        //     const responseBody = { order, items: createdItems };
-        //     await repo.saveIdempotency(idempotencyKey, null, order.id, responseBody);
-        // }
+        // save idempotency
+        if (idempotencyKey) {
+            const responseBody = { order, items: createdItems };
+            await repo.saveIdempotency(idempotencyKey, null, order.id, responseBody);
+        }
 
         await db.query("COMMIT");
 

@@ -1,15 +1,5 @@
 import db from "../../config/db.js";
 
-/* TODO: Idempotency helpers
-   Table expected:
-   CREATE TABLE idempotency_keys (
-     key TEXT PRIMARY KEY,
-     request_hash TEXT,
-     response JSONB,
-     order_id INT,
-     created_at timestamptz DEFAULT CURRENT_TIMESTAMP
-   );
-*/
 export async function getIdempotency(key) {
     if (!key) return null;
     const { rows } = await db.query(

@@ -249,9 +249,6 @@ docker compose up -d
 # Check the container is running
 docker ps
 # You should see a container named `deliverydb` (or whatever name you set in `docker-compose.yml`).
-
-# finally create all db tables (also inserts admin user)
-docker exec -i deliverydb psql -U postgres -d deliverydb < ./db/scheme.sql
 ```
 
 ✅ Now your PostgreSQL database is ready for the API to connect to.  

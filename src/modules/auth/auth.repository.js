@@ -18,8 +18,6 @@ export async function createUser(userData) {
          RETURNING id`,
         [validatedUser.name, validatedUser.email, validatedUser.password_hash, validatedUser.role]
     );
-    console.log(res);
-
 
     return { id: res.rows[0].id, ...validatedUser };
 }
