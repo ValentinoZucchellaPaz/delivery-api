@@ -5,7 +5,7 @@ import { orderQueue } from "./queue.js";
 import crypto from "crypto"
 
 
-// POST /orders     --- uses redis queue to make an async insertion in db and avoid blocking the event loop
+// POST /order     --- uses redis queue to make an async insertion in db and avoid blocking the event loop
 export async function createOrder(req, res, next) {
     try {
         const parsed = createOrderSchema.parse(req.body);
@@ -19,7 +19,6 @@ export async function createOrder(req, res, next) {
                 // return saved response (assume response stored)
                 return res.status(200).json({
                     status: "already exists",
-                    order: idemp.response.order,
                     items: idemp.response.items
                 });
             }
@@ -46,7 +45,7 @@ export async function createOrder(req, res, next) {
     }
 }
 
-// GET /orders/:public_id TODO:
+// GET /order/:public_id
 export async function getOrder(req, res, next) {
     try {
         const { public_id } = req.params;
@@ -133,7 +132,7 @@ async function changeStatusIfAllowed({ public_order_id, actor, allowedRoles, fro
     return updated;
 }
 
-// PATCH /orders/:id/accept  (we still provide it; will set accepted_at & status preparing)
+// PATCH /order/:id/accept  (we still provide it; will set accepted_at & status preparing)
 export async function acceptOrder(req, res, next) {
     try {
         const { public_id: id } = req.params;
@@ -152,7 +151,7 @@ export async function acceptOrder(req, res, next) {
     }
 }
 
-// PATCH /orders/:id/prepared
+// PATCH /order/:id/prepared
 export async function markPrepared(req, res, next) {
     try {
         const { public_id: id } = req.params;
@@ -169,7 +168,7 @@ export async function markPrepared(req, res, next) {
     }
 }
 
-// PATCH /orders/:id/sent
+// PATCH /order/:id/sent
 export async function markSent(req, res, next) {
     try {
         const { public_id: id } = req.params;
@@ -186,7 +185,7 @@ export async function markSent(req, res, next) {
     }
 }
 
-// PATCH /orders/:id/delivered
+// PATCH /order/:id/delivered
 export async function markDelivered(req, res, next) {
     try {
         const { public_id: id } = req.params;
@@ -203,7 +202,7 @@ export async function markDelivered(req, res, next) {
     }
 }
 
-// PATCH /orders/:id/paid
+// PATCH /order/:id/paid
 export async function markPaid(req, res, next) {
     try {
         const { public_id: id } = req.params;
@@ -224,7 +223,7 @@ export async function markPaid(req, res, next) {
     }
 }
 
-// PATCH /orders/:id/cancel
+// PATCH /order/:id/cancel
 export async function cancelOrder(req, res, next) {
     try {
         const { public_id: id } = req.params;

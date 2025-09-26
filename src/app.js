@@ -5,7 +5,7 @@ const app = express();
 
 // middlewares
 import { errorHandler } from './middlewares/errorHandler.js';
-dotenv.config();
+dotenv.config({ quiet: true });
 app.use(express.json());
 app.use(cookieParser())
 

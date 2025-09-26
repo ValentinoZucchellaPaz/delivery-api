@@ -69,7 +69,8 @@ The system focuses on:
 ##### Order
 - Represents a customer order.
 - Attributes:
-  - `id`
+  - `id` (PK)
+  - `public_id` (UUID, unique, public identifier)
   - `customer_id` (user id, FK)
   - `branch_id` (FK)
   - `status` (`pending` (default), `preparing`, `on_the_way`, `delivered`, `cancelled`)
@@ -92,7 +93,7 @@ The system focuses on:
   - `price`
 
 ### 5. **DB Diagram**
-![Diagrama de base de datos](./public/db_diagram.png)
+![Database Diagram](./public/db_diagram.png)
 
 ---
 
@@ -100,10 +101,11 @@ The system focuses on:
 
 1. **Customer places an order** (`POST /orders`) selecting restaurant and menu items.
 2. **System calculates total price and estimated delivery time** based on restaurant preparation time.
-3. **Restaurant updates status**:
+3. **An order id (UUID) is given to track the order**
+4. **Restaurant updates status**:
    - `preparing` → when order starts being prepared.
    - `on_the_way` → when delivery leaves the restaurant.
-4. **Delivery completion**:
+5. **Delivery completion**:
    - Restaurant (or delivery person using restaurant account) sets order to `delivered`.
    - Order is automatically marked as `paid` (if it wasn't marked before).
 
@@ -189,6 +191,7 @@ In each step of this transition the corresponding timestamp is updated.
 - The API snapshots item prices into `order_items` at creation to avoid price drift.
 - Use `x-idempotency-key` on `POST /order` to make creation idempotent (recommended for unstable mobile networks).
 - Order has timestamps for each change of state in the order.
+- The orders are identified publicly by a `public_id` (UUID) to avoid exposing serial ids.
 
 ---
 
@@ -196,6 +199,9 @@ In each step of this transition the corresponding timestamp is updated.
 - **Payment Integration** (external payment gateway).
 - **Notification System** (real-time updates via WebSockets).
 - **Delivery Boy and Branch Accounts** (separate from restaurant_owner account).
+- **Reviews and Ratings** (for customers to rate restaurants and delivery).
+- **Geolocation and Mapping** (for delivery tracking).
+- **UUID's for all entities to avoid exposing serial id**
 
 <!-- 
 ---
@@ -258,6 +264,11 @@ The API will read the database connection from your `.env` file.
 ```bash
 npm i
 npm run dev
+```
+
+### 6. Run Tests
+```bash
+npm test
 ```
 
 > You can see a more detailed documentation (made with OpenAPI) of the project in the `/api-docs` route
