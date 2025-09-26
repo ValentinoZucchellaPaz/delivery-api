@@ -119,30 +119,27 @@ CREATE INDEX idx_menu_items_available ON menu_items (available);
 -- ===================================================
 -- ORDERS
 -- ===================================================
+
 CREATE TABLE orders (
     id SERIAL PRIMARY KEY,
-    customer_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    branch_id INT NOT NULL REFERENCES branches(id) ON DELETE CASCADE,
-
--- delivery info
-delivery_address VARCHAR(255) NOT NULL,
-
--- timestamps for trazability
-estimated_ready_at timestamptz,
-accepted_at timestamptz,
-prepared_at timestamptz,
-sent_at timestamptz,
-delivered_at timestamptz,
-paid_at timestamptz,
-cancelled_at timestamptz,
-status order_status DEFAULT 'pending',
-
--- $$$
-
-total NUMERIC(10,2) NOT NULL CHECK (total >= 0),
+    public_id UUID NOT NULL UNIQUE,
+    customer_id INT NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    branch_id INT NOT NULL REFERENCES branches (id) ON DELETE CASCADE,
+    -- delivery info
+    delivery_address VARCHAR(255) NOT NULL,
+    -- timestamps for trazability
+    estimated_ready_at timestamptz,
+    accepted_at timestamptz,
+    prepared_at timestamptz,
+    sent_at timestamptz,
+    delivered_at timestamptz,
+    paid_at timestamptz,
+    cancelled_at timestamptz,
+    status order_status DEFAULT 'pending',
+    -- $$$
+    total NUMERIC(10, 2) NOT NULL CHECK (total >= 0),
     payment_method payment_method DEFAULT 'cash',
     paid BOOLEAN DEFAULT FALSE,
-
     created_at timestamptz DEFAULT CURRENT_TIMESTAMP
 );
 

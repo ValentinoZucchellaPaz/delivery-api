@@ -9,9 +9,10 @@ export async function getIdempotency(key) {
     return rows[0] || null;
 }
 
-export async function saveIdempotency(key, request_hash, order_id, responseBody) {
+export async function saveIdempotency(key, request_hash, order_id, responseBody, client = null) {
     if (!key) return;
-    await db.query(
+    const c = client || db;
+    await c.query(
         `INSERT INTO idempotency_keys (key, request_hash, order_id, response) VALUES ($1, $2, $3, $4)
      ON CONFLICT (key) DO UPDATE SET request_hash = EXCLUDED.request_hash, order_id = EXCLUDED.order_id, response = EXCLUDED.response`,
         [key, request_hash, order_id, responseBody]
@@ -19,8 +20,9 @@ export async function saveIdempotency(key, request_hash, order_id, responseBody)
 }
 
 // Get branch info (owner id and avg_waiting_time)
-export async function getBranchInfo(branch_id) {
-    const { rows } = await db.query(
+export async function getBranchInfo(branch_id, client = null) {
+    const c = client || db;
+    const { rows } = await c.query(
         `SELECT b.id as branch_id, r.user_id as owner_id, b.avg_waiting_time
      FROM branches b
      JOIN restaurants r ON r.id = b.restaurant_id
@@ -31,7 +33,8 @@ export async function getBranchInfo(branch_id) {
 }
 
 // Get menu_item price & availability
-export async function getMenuItemsByIds(menu_item_ids) {
+export async function getMenuItemsByIds(menu_item_ids, client = null) {
+    const c = client || db;
     const { rows } = await db.query(
         `SELECT id, name, price, available FROM menu_items WHERE id = ANY($1::int[])`,
         [menu_item_ids]
@@ -39,18 +42,43 @@ export async function getMenuItemsByIds(menu_item_ids) {
     return rows;
 }
 
-export async function createOrder({ customer_id, branch_id, delivery_address, total }) {
-    const { rows } = await db.query(
-        `INSERT INTO orders (customer_id, branch_id, delivery_address, total, status, accepted_at, created_at)
-     VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
-     RETURNING id, customer_id, branch_id, delivery_address, total, status, accepted_at, created_at`,
-        [customer_id, branch_id, delivery_address, total, 'preparing'] // automatic acceptance => preparing
-    );
+export async function createOrder(
+    publicId,
+    userId,
+    branchId,
+    deliveryAddress,
+    interval,  // ex. '25 minutes'
+    total,
+    status = 'preparing',
+    client = null
+) {
+    const c = client || pool;
+
+    const insertOrderQuery = `
+    INSERT INTO orders
+      (public_id, customer_id, branch_id, delivery_address, estimated_ready_at, total, status, accepted_at, created_at)
+    VALUES
+      ($1, $2, $3, $4, NOW() + ($5)::interval, $6, $7, NOW(), NOW())
+    RETURNING id, public_id, customer_id, branch_id, delivery_address, estimated_ready_at, total, status, accepted_at, created_at
+  `;
+
+    const { rows } = await c.query(insertOrderQuery, [
+        publicId,
+        userId,
+        branchId,
+        deliveryAddress,
+        interval,
+        total,
+        status
+    ]);
+
     return rows[0];
 }
 
-export async function createOrderItems(order_id, itemsWithPrice) {
+
+export async function createOrderItems(order_id, itemsWithPrice, client = null) {
     if (!itemsWithPrice || !itemsWithPrice.length) return [];
+    const c = client || db;
     const values = [];
     const placeholders = itemsWithPrice.map((it, i) => {
         const base = i * 4;
@@ -63,24 +91,24 @@ export async function createOrderItems(order_id, itemsWithPrice) {
     VALUES ${placeholders.join(", ")}
     RETURNING id, menu_item_id, quantity, unit_price, order_id
   `;
-    const { rows } = await db.query(query, values);
+    const { rows } = await c.query(query, values);
     return rows;
 }
 
-export async function getOrderById(order_id) {
+export async function getOrderById(public_id) {
     const { rows: orderRows } = await db.query(
-        `SELECT id, customer_id, branch_id, delivery_address, estimated_ready_at, accepted_at,
+        `SELECT id, public_id, customer_id, branch_id, delivery_address, estimated_ready_at, accepted_at,
             prepared_at, sent_at, delivered_at, paid_at, cancelled_at,
             status, total, payment_method, paid, created_at
-     FROM orders WHERE id = $1`,
-        [order_id]
+     FROM orders WHERE public_id = $1`,
+        [public_id]
     );
     const order = orderRows[0];
     if (!order) return null;
 
     const { rows: items } = await db.query(
         `SELECT id, menu_item_id, quantity, unit_price FROM order_items WHERE order_id = $1`,
-        [order_id]
+        [order.id]
     );
 
     return { order, items };
@@ -100,7 +128,7 @@ export async function listOrders({ customer_id, branch_id, limit = 50, offset = 
     }
     const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
     const { rows } = await db.query(
-        `SELECT id, customer_id, branch_id, status, total, created_at FROM orders ${where}
+        `SELECT public_id, customer_id, branch_id, status, total, created_at FROM orders ${where}
      ORDER BY created_at DESC LIMIT $${idx++} OFFSET $${idx++}`,
         [...vals, limit, offset]
     );
@@ -120,7 +148,7 @@ export async function updateOrderTimestampsAndStatus(order_id, fields) {
     if (!setParts.length) return null;
     vals.push(order_id);
     const { rows } = await db.query(
-        `UPDATE orders SET ${setParts.join(", ")} WHERE id = $${idx} RETURNING *`,
+        `UPDATE orders SET ${setParts.join(", ")} WHERE public_id = $${idx} RETURNING *`,
         vals
     );
     return rows[0];
