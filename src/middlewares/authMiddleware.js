@@ -1,8 +1,5 @@
-import dotenv from 'dotenv';
 import { verifyJwt } from '../utils/jwt.js';
 import { AuthError } from '../utils/errors.js';
-
-dotenv.config();
 
 export const authenticateToken = (req, res, next) => {
     const authHeader = req.headers['authorization'];

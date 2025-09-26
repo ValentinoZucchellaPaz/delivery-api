@@ -9,7 +9,25 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: deliverydb
+      APP_ADMIN_EMAIL: admin@god.com
+      APP_ADMIN_PASSWORD_HASH: $2b$10$CXv3GGdhKJFSSOaPB79eDe9t61lqGcy93WNZbXJt9o/nPReyD/77a
     ports:
       - "5433:5432"
     volumes:
-      - ./db/scheme.sql:/docker-entrypoint-initdb.d/scheme.sql
+      - pgdata:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/0_init.sql:ro
+      - ./db/scheme.sql:/docker-entrypoint-initdb.d/1_scheme.sql:ro
+      - ./db/seed.sql:/docker-entrypoint-initdb.d/2_seed.sql:ro
+
+  redis:
+    image: redis:7
+    container_name: delivery-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+
+volumes:
+  pgdata:
+  redisdata:

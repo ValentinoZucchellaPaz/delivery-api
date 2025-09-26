@@ -1,12 +1,6 @@
 import { createRestaurantSchema, updateRestaurantSchema } from "./restaurant.schema.js";
 import { NotFoundError, AppError } from '../../utils/errors.js'
 import * as repo from './restaurant.repository.js'
-// import {
-//     createRestaurant as createRestaurantDB,
-//     getAllRestaurants as getAllRestaurantsDB,
-//     getRestaurantById as getRestaurantByIdDB,
-//     getBranchesByRestaurantId as getBranchesByRestaurantIdDB
-// } from './restaurant.repository.js'
 import { getUserById } from '../user/user.repository.js';
 
 export async function createRestaurant(req, res, next) {

@@ -8,9 +8,9 @@ const router = Router();
 
 router.get("/", authenticateToken, authorizeRoles('admin'), getUsers);
 router.get("/:id", authenticateToken, authorizeRoles('admin'), validateParams(userIdParamSchema), getUser)
-router.patch("/:id", authenticateToken, authorizeRoles("admin"), editUser);
-router.patch("/:id/deactivate", authenticateToken, authorizeRoles("admin"), deactivateUser);
-router.patch("/:id/reactivate", authenticateToken, authorizeRoles("admin"), reactivateUser);
+router.patch("/:id", authenticateToken, authorizeRoles("admin"), validateParams(userIdParamSchema), editUser);
+router.patch("/:id/deactivate", authenticateToken, authorizeRoles("admin"), validateParams(userIdParamSchema), deactivateUser);
+router.patch("/:id/reactivate", authenticateToken, authorizeRoles("admin"), validateParams(userIdParamSchema), reactivateUser);
 
 
 export default router;

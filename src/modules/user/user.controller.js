@@ -1,8 +1,6 @@
-import { ConflictError, NotFoundError, ValidationError } from "../../utils/errors.js";
+import { NotFoundError, ValidationError } from "../../utils/errors.js";
 import { getAllUsers, getUserById, setUserActive, updateUser } from "./user.repository.js";
 import { PublicUserSchema, UserUpdateSchema } from "./user.schema.js";
-
-// TODO: updateUser, deleteUser
 
 /**
  * ====================================================

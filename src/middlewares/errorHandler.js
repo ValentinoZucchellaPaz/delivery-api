@@ -2,15 +2,17 @@ import { ZodError } from "zod";
 import { AppError, ValidationError } from "../utils/errors.js";
 
 export function errorHandler(err, req, res, next) {
-    console.error("Error capturado:", err);
-
-    // validation errors (Zod)
+    // ------------------------
+    // Zod validation errors
+    // ------------------------
     if (err instanceof ZodError) {
         const details = err.errors?.map(issue => ({
             path: issue.path.join("."),
             message: issue.message,
         })) ?? JSON.parse(err.message);
+
         const valError = new ValidationError(details);
+
         return res.status(valError.statusCode).json({
             status: "error",
             type: valError.type,
@@ -19,6 +21,9 @@ export function errorHandler(err, req, res, next) {
         });
     }
 
+    // ------------------------
+    // AppError (and subclasses)
+    // ------------------------
     if (err instanceof AppError) {
         return res.status(err.statusCode).json({
             status: "error",
@@ -28,7 +33,9 @@ export function errorHandler(err, req, res, next) {
         });
     }
 
-    // db error (Postgres)
+    // ------------------------
+    // Postgres DB errors
+    // ------------------------
     if (err.code) {
         let message = "Database error";
         switch (err.code) {
@@ -39,15 +46,6 @@ export function errorHandler(err, req, res, next) {
                 message = "Foreign key constraint failed";
                 break;
         }
-        //         switch (err.code) {
-        //             case "ER_DUP_ENTRY":
-        //                 message = "Duplicate entry";
-        //                 break;
-        //             case "ER_NO_REFERENCED_ROW":
-        //             case "ER_NO_REFERENCED_ROW_2":
-        //                 message = "Foreign key constraint failed";
-        //                 break;
-        //         }
         return res.status(400).json({
             status: "error",
             type: "database",
@@ -55,10 +53,13 @@ export function errorHandler(err, req, res, next) {
         });
     }
 
-    // generic error 500
-    res.status(500).json({
+    // ------------------------
+    // Generic 500 error
+    // ------------------------
+    return res.status(err.statusCode || 500).json({
         status: "error",
-        type: "internal",
-        message: "Internal server error",
+        type: err.type || "internal",
+        message: err.message || "Internal server error",
+        ...(err.details ? { details: err.details } : {}),
     });
 }
