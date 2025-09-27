@@ -269,6 +269,9 @@ npm run dev
 ### 6. Run Tests
 ```bash
 npm test
+
+# check tests coverage with
+npm run coverage
 ```
 
 > You can see a more detailed documentation (made with OpenAPI) of the project in the `/api-docs` route

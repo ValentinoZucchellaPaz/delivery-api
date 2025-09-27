@@ -24,3 +24,6 @@ Thumbs.db
 # IDE files
 .vscode/
 .qodo
+
+# tests file
+coverage/
