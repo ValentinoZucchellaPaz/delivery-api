@@ -6,7 +6,7 @@ import bcrypt from "bcrypt";
 import * as authRepo from "../modules/auth/auth.repository.js";
 import * as userRepo from "../modules/user/user.repository.js";
 
-describe("Auth API (unit tests with mocks)", () => {
+describe("Auth Module (unit tests with mocks)", () => {
 
     // global mocks for db
     jest.mock("../config/db.js", () => ({

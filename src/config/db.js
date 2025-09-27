@@ -19,7 +19,7 @@ const pool = new Pool({
 });
 
 
-(async function testConnection() {
+export async function testConnection() {
     try {
         const res = await pool.query("SELECT NOW() AS currentTime");
         console.log("Succesful connection to Postgres:", res.rows[0].currenttime);
@@ -27,6 +27,6 @@ const pool = new Pool({
         console.error("Error connecting to Postgres:", err);
         // process.exit(1);
     }
-})();
+};
 
 export default pool;

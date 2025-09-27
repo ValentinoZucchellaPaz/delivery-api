@@ -85,6 +85,8 @@ export async function updateBranch(req, res, next) {
 export async function editMenu(req, res, next) {
     const { menu_id } = req.params;
 
+    let client;
+
     try {
         const parsed = editMenuSchema.parse(req.body);
 
@@ -97,26 +99,30 @@ export async function editMenu(req, res, next) {
             throw new AppError("You are not the owner of this restaurant", 403, "authorization");
         }
 
-        await pool.query("BEGIN");
+        client = await pool.connect();
+        await client.query("BEGIN");
 
         // update title and active
-        const menu = await repo.updateMenu(menu_id, parsed) ?? menu_id;
+        const menu = await repo.updateMenu(menu_id, parsed, client) ?? menu_id;
 
         // delete items
-        if (parsed.delete.length) await repo.deleteMenuItems(parsed.delete);
+        if (parsed.delete.length) await repo.deleteMenuItems(parsed.delete, client);
 
         // add items
-        const addedItems = await repo.createMenuItems(menu_id, parsed.add);
+        const addedItems = await repo.createMenuItems(menu_id, parsed.add, client);
 
-        await pool.query("COMMIT");
+        await client.query("COMMIT");
 
         res.json({ menu, addedItems });
     } catch (err) {
-        await pool.query("ROLLBACK").catch(() => { });
+        if (client) await client.query("ROLLBACK").catch(() => { });
         if (err.code == 23505) {
             next(new AppError("Cannot have duplicate entry", 400, "items params"))
+        } else {
+            next(err);
         }
-        next(err);
+    } finally {
+        if (client) client.release()
     }
 }
 

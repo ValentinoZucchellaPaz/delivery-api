@@ -22,6 +22,10 @@ DROP TABLE IF EXISTS branches CASCADE;
 
 DROP TABLE IF EXISTS restaurants CASCADE;
 
+DROP TABLE IF EXISTS refresh_tokens CASCADE;
+
+DROP TABLE IF EXISTS idempotency_keys CASCADE;
+
 DROP TABLE IF EXISTS users CASCADE;
 
 DROP TYPE IF EXISTS user_role CASCADE;
@@ -31,7 +35,7 @@ DROP TYPE IF EXISTS order_status CASCADE;
 DROP TYPE IF EXISTS payment_method CASCADE;
 
 -- ===================================================
--- ENUMS
+-- ENUMS (TYPES)
 -- ===================================================
 CREATE TYPE user_role AS ENUM ('customer', 'restaurant_owner', 'admin');
 -- in the future there can be a `restaurant_branch`
@@ -82,8 +86,6 @@ CREATE TABLE branches (
 );
 
 CREATE INDEX idx_branches_restaurant_id ON branches (restaurant_id);
-
-CREATE INDEX idx_branches_city_active ON branches (city, active);
 
 -- ===================================================
 -- MENUS

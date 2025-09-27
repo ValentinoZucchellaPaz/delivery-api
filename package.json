@@ -5,7 +5,8 @@
   "main": "./src/server.js",
   "type": "module",
   "scripts": {
-    "test": "jest --detectOpenHandles",
+    "test": "jest",
+    "coverage": "jest --collect-coverage",
     "dev": "node --watch src/server.js"
   },
   "repository": {

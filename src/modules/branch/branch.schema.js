@@ -32,7 +32,7 @@ export const menuItemSchema = z.object({
     name: z.string().min(1),
     description: z.string().optional(),
     price: z.number().min(0),
-    available: z.boolean().optional().default(true)
+    available: z.boolean().optional()
 })
 
 export const createMenuSchema = z.object({

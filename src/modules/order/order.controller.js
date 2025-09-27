@@ -91,7 +91,7 @@ export async function listOrders(req, res, next) {
                 if (branchInfo.owner_id !== req.user.user_id) throw new AppError("Forbidden", 403, "authorization");
             } else {
                 // not providing branch_id: optional - for simplicity, don't allow listing all branches of owner here
-                throw new AppError("Must provide a branch id to look for its orders");
+                throw new AppError("Must provide a branch id in url params to look for its orders", 400);
             }
         }
 

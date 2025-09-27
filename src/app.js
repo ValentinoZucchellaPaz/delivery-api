@@ -20,6 +20,7 @@ import orderRoutes from './modules/order/order.routes.js';
 import authRoutes from './modules/auth/auth.routes.js';
 import restaurantRoutes from './modules/restaurant/restaurant.routes.js'
 import branchRoutes from './modules/branch/branch.routes.js';
+import { testConnection } from './config/db.js';
 app.use('/order', orderRoutes);
 app.use('/users', userRoutes)
 app.use('/auth', authRoutes)
