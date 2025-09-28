@@ -23,7 +23,7 @@ jobs:
       DB_PASSWORD: postgres
       DB_NAME: deliverydb
       DB_PORT: 5433
-      REFRESH_TOKEN_MAX_AGE: $((30*24*60*60*1000)) # 30 days in ms
+      REFRESH_TOKEN_MAX_AGE: $((30*24*60*60*1000))
 
     steps:
       - name: Checkout repository
@@ -35,13 +35,18 @@ jobs:
           node-version: 20
           cache: "npm"
 
-      - name: Install Docker Compose
-        run: sudo apt-get update && sudo apt-get install -y docker-compose
+      - name: Install Docker and Compose
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y docker.io
+          sudo apt-get install -y docker-compose-plugin
+          docker --version
+          docker compose version
 
       - name: Start services with Docker Compose
-        run: docker-compose -f docker-compose.yml up -d
+        run: docker compose up -d
 
-      - name: Wait for DB to be ready
+      - name: Wait for Postgres
         run: |
           echo "Waiting for Postgres..."
           for i in {1..30}; do
@@ -50,7 +55,7 @@ jobs:
             sleep 1
           done
 
-      - name: Wait for Redis to be ready
+      - name: Wait for Redis
         run: |
           echo "Waiting for Redis..."
           for i in {1..30}; do

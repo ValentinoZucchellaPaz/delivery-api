@@ -10,7 +10,7 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: deliverydb
       APP_ADMIN_EMAIL: admin@god.com
-      APP_ADMIN_PASSWORD_HASH: $2b$10$CXv3GGdhKJFSSOaPB79eDe9t61lqGcy93WNZbXJt9o/nPReyD/77a
+      APP_ADMIN_PASSWORD_HASH: '$2b$10$CXv3GGdhKJFSSOaPB79eDe9t61lqGcy93WNZbXJt9o/nPReyD/77a'
     ports:
       - "5433:5432"
     volumes:
