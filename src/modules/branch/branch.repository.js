@@ -1,4 +1,4 @@
-import db from '../../config/db.js'
+import db from "../../config/db.js";
 
 export async function createBranch({ restaurant_id, address, city }) {
   const query = `
@@ -34,11 +34,13 @@ export async function createMenuItems(menu_id, items, client = null) {
   if (!items || items.length === 0) return [];
 
   const values = [];
-  const placeholders = items.map((item, idx) => {
-    const i = idx * 5;
-    values.push(item.name, item.description || null, item.price, item.available ?? true, menu_id);
-    return `($${i + 1}, $${i + 2}, $${i + 3}, $${i + 4}, $${i + 5})`;
-  }).join(",");
+  const placeholders = items
+    .map((item, idx) => {
+      const i = idx * 5;
+      values.push(item.name, item.description || null, item.price, item.available ?? true, menu_id);
+      return `($${i + 1}, $${i + 2}, $${i + 3}, $${i + 4}, $${i + 5})`;
+    })
+    .join(",");
 
   const query = `
     INSERT INTO menu_items (name, description, price, available, menu_id)
@@ -46,19 +48,22 @@ export async function createMenuItems(menu_id, items, client = null) {
     RETURNING id, name, description, price, available, menu_id
   `;
 
-  const c = client || db
+  const c = client || db;
 
   const { rows } = await c.query(query, values);
   return rows;
 }
 
 export async function getBranchWithOwner(branch_id) {
-  const { rows } = await db.query(`
+  const { rows } = await db.query(
+    `
     SELECT b.id as branch_id, r.user_id as owner_id
     FROM branches b
     JOIN restaurants r ON r.id = b.restaurant_id
     WHERE b.id = $1
-  `, [branch_id]);
+  `,
+    [branch_id]
+  );
   return rows[0];
 }
 
@@ -72,7 +77,7 @@ export async function getAllMenusByBranch(branch_id) {
   );
 
   if (!menus.length) return [];
-  const menuIds = menus.map(m => m.id);
+  const menuIds = menus.map((m) => m.id);
   const { rows: items } = await db.query(
     `SELECT id, name, description, price, available, menu_id
      FROM menu_items
@@ -82,13 +87,13 @@ export async function getAllMenusByBranch(branch_id) {
 
   // group by menu  and combine
   const itemsByMenu = {};
-  items.forEach(item => {
+  items.forEach((item) => {
     if (!itemsByMenu[item.menu_id]) itemsByMenu[item.menu_id] = [];
     itemsByMenu[item.menu_id].push(item);
   });
-  const result = menus.map(menu => ({
+  const result = menus.map((menu) => ({
     ...menu,
-    items: itemsByMenu[menu.id] || []
+    items: itemsByMenu[menu.id] || [],
   }));
 
   return result;
@@ -143,19 +148,21 @@ export async function updateMenu(menu_id, data, client = null) {
 
 export async function deleteMenuItems(itemIds, client = null) {
   if (!itemIds.length) return;
-  const c = client || db
+  const c = client || db;
   await c.query(`DELETE FROM menu_items WHERE id = ANY($1::int[])`, [itemIds]);
 }
 
-
 export async function getMenuOwners(menu_id) {
-  const { rows } = await db.query(`
+  const { rows } = await db.query(
+    `
       SELECT b.id as branch_id, r.user_id as owner_id
       FROM menus m
       JOIN branches b ON b.id = m.branch_id
       JOIN restaurants r ON r.id = b.restaurant_id
       WHERE m.id = $1
-    `, [menu_id]);
+    `,
+    [menu_id]
+  );
 
   return rows[0];
 }
