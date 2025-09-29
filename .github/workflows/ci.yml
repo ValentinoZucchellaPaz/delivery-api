@@ -18,11 +18,11 @@ jobs:
       NODE_ENV: dev
       JWT_SECRET: my-super-duper-uper-wooper-mega-secret-json-web-token
       SALT_RUNDS: 10
-      DB_HOST: deliverydb
+      DB_HOST: localhost
+      DB_PORT: 5433
       DB_USER: postgres
       DB_PASSWORD: postgres
       DB_NAME: deliverydb
-      DB_PORT: 5432
       REFRESH_TOKEN_MAX_AGE: $((30*24*60*60*1000))
 
     steps:
