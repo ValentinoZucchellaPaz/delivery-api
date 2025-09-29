@@ -5,8 +5,8 @@
   "main": "./src/server.js",
   "type": "module",
   "scripts": {
-    "test": "jest --detectOpenHandles",
-    "test:coverage": "jest --detectOpenHandles --collect-coverage",
+    "test": "jest --detectOpenHandles --forceExit",
+    "test:coverage": "jest --detectOpenHandles --collect-coverage --forceExit",
     "dev": "node --watch src/server.js",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix"
