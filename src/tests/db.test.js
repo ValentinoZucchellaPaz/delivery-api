@@ -5,8 +5,8 @@ async function waitForDb(maxTries = 30) {
     try {
       await db.query("SELECT 1");
       return;
-    } catch (err) {
-      console.log("DB not ready yet, retrying...");
+    } catch (e) {
+      console.log("DB not ready yet, retrying...", e);
       await new Promise((r) => setTimeout(r, 1000));
     }
   }

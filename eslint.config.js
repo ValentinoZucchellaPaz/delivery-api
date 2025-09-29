@@ -20,6 +20,10 @@ export default defineConfig([
         process: "readonly",
         Buffer: "readonly",
         crypto: "readonly",
+        setTimeout: "readonly",
+        clearTimeout: "readonly",
+        setInterval: "readonly",
+        clearInterval: "readonly",
       },
     },
 
